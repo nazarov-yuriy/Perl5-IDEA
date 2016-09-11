@@ -20,12 +20,10 @@ import com.intellij.ide.projectView.actions.MarkSourceRootAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.perl5.lang.perl.idea.modules.JpsPerlLibrarySourceRootType;
-import com.perl5.lang.perl.idea.modules.PerlModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +85,6 @@ public class PerlMarkLibrarySourceRootAction extends MarkSourceRootAction
 	protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module)
 	{
 		// fixme check that perl enabled for module in microIde
-		return super.isEnabled(selection, module) && ModuleType.get(module) == PerlModuleType.getInstance();
+		return false; //super.isEnabled(selection, module) && ModuleType.get(module) == PerlModuleType.getInstance();
 	}
 }

@@ -77,6 +77,16 @@ public class Perl5ProjectComponent implements ProjectComponent
 		PerlStringCompletionUtil.HASH_INDEXES_CACHE.clear();
 		PerlStringCompletionUtil.HEREDOC_OPENERS_CACHE.clear();
 
+		// removing perl module types
+		for (Module module : ModuleManager.getInstance(myProject).getModules())
+		{
+			if ("PERL5_MODULE".equals(module.getOptionValue(Module.ELEMENT_TYPE)))
+			{
+				module.clearOption(Module.ELEMENT_TYPE);
+			}
+		}
+
+
 		PerlApplicationSettings settings = PerlApplicationSettings.getInstance();
 		if (settings.shouldShowAnnounce())
 		{
