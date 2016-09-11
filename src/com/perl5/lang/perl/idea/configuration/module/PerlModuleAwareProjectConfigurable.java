@@ -16,11 +16,12 @@
 
 package com.perl5.lang.perl.idea.configuration.module;
 
-import com.intellij.application.options.ModuleAwareProjectConfigurable;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -28,21 +29,40 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Computable;
 import com.perl5.PerlBundle;
+import com.perl5.PerlIcons;
+import com.perl5.lang.perl.idea.configuration.settings.PerlSettingsConfigurable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Created by hurricup on 27.08.2016.
  */
-public class PerlModuleAwareProjectConfigurable extends ModuleAwareProjectConfigurable<PerlContentEntriesEditor>
+public class PerlModuleAwareProjectConfigurable extends ModuleAwareProjectConfigurableEx<UnnamedConfigurable>
 {
 	public PerlModuleAwareProjectConfigurable(@NotNull Project project)
 	{
 		super(project, PerlBundle.message("perl.project.settings"), null);
 	}
 
+	@Nullable
+	@Override
+	protected Configurable createProjectConfigurable()
+	{
+		return new PerlSettingsConfigurable(getProject());
+	}
+
+	@Nullable
+	@Override
+	protected Icon getProjectConfigurableItemIcon()
+	{
+		return PerlIcons.PERL_LANGUAGE_ICON;
+	}
+
 	@NotNull
 	@Override
-	protected PerlContentEntriesEditor createModuleConfigurable(final Module module)
+	protected Configurable createModuleConfigurable(final Module module)
 	{
 		final ModifiableRootModel myModifiableRootModel = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>()
 		{

@@ -45,7 +45,7 @@ public abstract class PerlContentEntriesEditor extends CommonContentEntriesEdito
 		// fixme here we should remove classroots from reset and add new ones;
 		// fixme also, we should serialize our library roots
 //		PerlLibUtil.updatePerlLibsForModel(getModel());
-		super.apply();
+//		super.apply();
 		myPerlDependenciesConfigurable.apply();
 	}
 
