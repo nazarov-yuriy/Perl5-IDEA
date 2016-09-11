@@ -22,11 +22,14 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.perl5.lang.perl.idea.modules.JpsPerlLibrarySourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -88,4 +91,19 @@ public class PerlMicroIdeContentEntriesEditor extends PerlContentEntriesEditor
 		}
 	}
 
+
+	@Override
+	protected void addAdditionalSettingsToPanel(JPanel mainPanel)
+	{
+		PerlModuleSdkConfigurable perlModuleSdkConfigurable = new PerlModuleSdkConfigurable(ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel())
+		{
+			@Override
+			protected ModifiableRootModel getRootModel()
+			{
+				return getState().getRootModel();
+			}
+		};
+		registerDisposable(perlModuleSdkConfigurable);
+		mainPanel.add(perlModuleSdkConfigurable.createComponent(), BorderLayout.NORTH);
+	}
 }

@@ -108,6 +108,22 @@ public class PerlSettingsConfigurable implements Configurable
 		FormBuilder builder = FormBuilder.createFormBuilder();
 		builder.getPanel().setLayout(new VerticalFlowLayout());
 
+		// fixme adjust for project
+/*
+		PerlModuleSdkConfigurable perlModuleSdkConfigurable = new PerlModuleSdkConfigurable(ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel())
+		{
+			@Override
+			protected ModifiableRootModel getRootModel()
+			{
+				return myProject.getState().getRootModel();
+			}
+		};
+		registerDisposable(perlModuleSdkConfigurable);
+		mainPanel.add(perlModuleSdkConfigurable.createComponent(), BorderLayout.NORTH);
+*/
+
+
+		// fixme this has to be removed
 		if (!PlatformUtils.isIntelliJ())
 		{
 			createMicroIdeComponents(builder);
