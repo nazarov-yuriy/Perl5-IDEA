@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -33,7 +34,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.perl5.lang.perl.idea.sdk.PerlSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,11 +47,12 @@ import java.awt.event.ActionListener;
  */
 public abstract class PerlModuleSdkConfigurable implements Disposable
 {
-	private final ProjectSdksModel myJdksModel;
-	private JdkComboBox myCbModuleJdk;
-	private JPanel myJdkPanel;
+	private final ProjectSdksModel myProjectSdksModel;
+	private JdkComboBox mySdkComboBox;
+	private JPanel mySdkPanel;
+	private final Project myProject;
 	private boolean myFreeze = false;
-	private final SdkModel.Listener myListener = new SdkModel.Listener()
+	private final SdkModel.Listener mySdkModelListener = new SdkModel.Listener()
 	{
 		@Override
 		public void sdkAdded(Sdk sdk)
@@ -77,23 +79,24 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 		}
 	};
 
-	public PerlModuleSdkConfigurable(ProjectSdksModel jdksModel)
+	public PerlModuleSdkConfigurable(@NotNull Project project)
 	{
-		myJdksModel = jdksModel;
-		myJdksModel.addListener(myListener);
+		myProjectSdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+		myProjectSdksModel.addListener(mySdkModelListener);
+		myProject = project;
 		init();
 		reloadModel();
 	}
 
 	public JComponent createComponent()
 	{
-		return myJdkPanel;
+		return mySdkPanel;
 	}
 
 	private void reloadModel()
 	{
 		myFreeze = true;
-		myCbModuleJdk.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), getRootModel().getModule().getProject());
+		mySdkComboBox.reloadModel(new JdkComboBox.ProjectJdkComboBoxItem(), myProject);
 		reset();
 		myFreeze = false;
 	}
@@ -115,17 +118,18 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 
 	private void init()
 	{
-		myJdkPanel = new JPanel(new GridBagLayout());
-		myCbModuleJdk = new JdkComboBox(myJdksModel, new Condition<SdkTypeId>()
+		mySdkPanel = new JPanel(new GridBagLayout());
+		mySdkComboBox = new JdkComboBox(myProjectSdksModel, new Condition<SdkTypeId>()
 		{
 			@Override
 			public boolean value(SdkTypeId sdkTypeId)
 			{
-				return sdkTypeId == PerlSdkType.getInstance();
+				System.err.println("Checking " + sdkTypeId);
+				return true;//sdkTypeId == PerlSdkType.getInstance();
 			}
 		});
-		myCbModuleJdk.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
-		myCbModuleJdk.addActionListener(new ActionListener()
+		mySdkComboBox.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
+		mySdkComboBox.addActionListener(new ActionListener()
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -135,47 +139,46 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 					return;
 				}
 
-				final Sdk newJdk = myCbModuleJdk.getSelectedJdk();
+				final Sdk newJdk = mySdkComboBox.getSelectedJdk();
 				setSdk(newJdk);
 
 				clearCaches();
 			}
 		});
-		myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
+		mySdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
 				new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(12, 6, 12, 0), 0, 0));
-		myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
+		mySdkPanel.add(mySdkComboBox, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,
 				GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
 				new Insets(6, 6, 12, 0), 0, 0));
-		final Project project = getRootModel().getModule().getProject();
 		final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
-		myCbModuleJdk
-				.setSetupButton(setUpButton, project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>()
+		mySdkComboBox
+				.setSetupButton(setUpButton, myProject, myProjectSdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>()
 				{
 					@Override
 					public boolean value(Sdk jdk)
 					{
-						final Sdk projectJdk = myJdksModel.getProjectSdk();
+						final Sdk projectJdk = myProjectSdksModel.getProjectSdk();
 						if (projectJdk == null)
 						{
 							final int res =
-									Messages.showYesNoDialog(myJdkPanel,
+									Messages.showYesNoDialog(mySdkPanel,
 											ProjectBundle.message("project.roots.no.jdk.on.project.message"),
 											ProjectBundle.message("project.roots.no.jdk.on.project.title"),
 											Messages.getInformationIcon());
 							if (res == Messages.YES)
 							{
-								myJdksModel.setProjectSdk(jdk);
+								myProjectSdksModel.setProjectSdk(jdk);
 								return true;
 							}
 						}
 						return false;
 					}
 				}, true);
-		myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
+		mySdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
 				GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 4, 7, 0), 0, 0));
 		final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-		myCbModuleJdk.setEditButton(editButton, getRootModel().getModule().getProject(), new Computable<Sdk>()
+		mySdkComboBox.setEditButton(editButton, myProject, new Computable<Sdk>()
 		{
 			@Override
 			@Nullable
@@ -184,7 +187,7 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 				return getRootModel().getSdk();
 			}
 		});
-		myJdkPanel.add(editButton,
+		mySdkPanel.add(editButton,
 				new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 						new Insets(0, 4, 7, 0), 0, 0));
 	}
@@ -192,8 +195,7 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 	private void clearCaches()
 	{
 		final Module module = getRootModel().getModule();
-		final Project project = module.getProject();
-		final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+		final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
 		context.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(context, module));
 	}
 
@@ -203,20 +205,20 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 		final String jdkName = getRootModel().getSdkName();
 		if (jdkName != null && !getRootModel().isSdkInherited())
 		{
-			Sdk selectedModuleJdk = myJdksModel.findSdk(jdkName);
+			Sdk selectedModuleJdk = myProjectSdksModel.findSdk(jdkName);
 			if (selectedModuleJdk != null)
 			{
-				myCbModuleJdk.setSelectedJdk(selectedModuleJdk);
+				mySdkComboBox.setSelectedJdk(selectedModuleJdk);
 			}
 			else
 			{
-				myCbModuleJdk.setInvalidJdk(jdkName);
+				mySdkComboBox.setInvalidJdk(jdkName);
 				clearCaches();
 			}
 		}
 		else
 		{
-			myCbModuleJdk.setSelectedJdk(null);
+			mySdkComboBox.setSelectedJdk(null);
 		}
 		myFreeze = false;
 	}
@@ -224,6 +226,6 @@ public abstract class PerlModuleSdkConfigurable implements Disposable
 	@Override
 	public void dispose()
 	{
-		myJdksModel.removeListener(myListener);
+		myProjectSdksModel.removeListener(mySdkModelListener);
 	}
 }

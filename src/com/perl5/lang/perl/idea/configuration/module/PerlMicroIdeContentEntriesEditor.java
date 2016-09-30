@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.perl5.lang.perl.idea.modules.JpsPerlLibrarySourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -95,7 +94,7 @@ public class PerlMicroIdeContentEntriesEditor extends PerlContentEntriesEditor
 	@Override
 	protected void addAdditionalSettingsToPanel(JPanel mainPanel)
 	{
-		PerlModuleSdkConfigurable perlModuleSdkConfigurable = new PerlModuleSdkConfigurable(ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel())
+		PerlModuleSdkConfigurable perlModuleSdkConfigurable = new PerlModuleSdkConfigurable(myProject)
 		{
 			@Override
 			protected ModifiableRootModel getRootModel()
