@@ -26,7 +26,6 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataFile;
 import com.perl5.lang.perl.PerlParserDefinition;
-import com.perl5.lang.perl.fileTypes.PerlFileTypeScript;
 import com.perl5.lang.perl.idea.application.PerlParserExtensions;
 import com.perl5.lang.perl.idea.configuration.settings.PerlSharedSettings;
 import org.jetbrains.annotations.NonNls;
@@ -40,8 +39,6 @@ import java.io.IOException;
  */
 public abstract class PerlParserTestBase extends ParsingTestCase
 {
-	protected String myFileName;
-
 	public PerlParserTestBase()
 	{
 		this("", PerlFileTypeScript.EXTENSION_PL, new PerlParserDefinition());
@@ -49,43 +46,33 @@ public abstract class PerlParserTestBase extends ParsingTestCase
 
 	public PerlParserTestBase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions)
 	{
-		super(dataPath, fileExt, definitions);
+		super(dataPath, fileExt, true, definitions);
+	}
+
+	/*
+			if (checkErrors)
+				assertFalse(
+						"PsiFile contains error elements",
+						toParseTreeText(myFile, skipSpaces(), includeRanges()).contains("PsiErrorElement")
+				);
+	*/
+
+	@Deprecated // this is legacy for heavy tests
+	public void doTest(String name)
+	{
+		doTest(true);
+	}
+
+	@Deprecated // this is legacy for heavy tests
+	public void doTest(String name, boolean check)
+	{
+		doTest(check);
 	}
 
 	public void doTest()
 	{
 		doTest(true);
 	}
-
-	public void doTest(boolean check)
-	{
-		doTest(super.getTestName(true), check);
-	}
-
-	public void doTest(String filename)
-	{
-		doTest(filename, true);
-	}
-
-	public void doTest(String filename, boolean checkErrors)
-	{
-		myFileName = filename;
-		super.doTest(true);
-
-		if (checkErrors)
-			assertFalse(
-					"PsiFile contains error elements",
-					toParseTreeText(myFile, skipSpaces(), includeRanges()).contains("PsiErrorElement")
-			);
-	}
-
-
-	@Override
-	protected String getTestName(boolean lowercaseFirstLetter)
-	{
-		return myFileName;
-	}
-
 
 	@Override
 	protected boolean skipSpaces()

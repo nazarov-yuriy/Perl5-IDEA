@@ -49,7 +49,7 @@ import com.perl5.lang.perl.psi.properties.PerlLexicalScope;
 import com.perl5.lang.perl.psi.stubs.imports.PerlUseStatementStub;
 import com.perl5.lang.perl.psi.stubs.imports.runtime.PerlRuntimeImportStub;
 import com.perl5.lang.perl.psi.utils.PerlPsiUtil;
-import com.perl5.lang.perl.psi.utils.PerlScopeUtil;
+import com.perl5.lang.perl.psi.utils.PerlResolveUtil;
 import com.perl5.lang.perl.util.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -334,7 +334,7 @@ public class PerlFileImpl extends PsiFileBase implements PerlFile
 	@Override
 	public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place)
 	{
-		return PerlScopeUtil.processChildren(
+		return PerlResolveUtil.processChildren(
 				this,
 				processor,
 				state,

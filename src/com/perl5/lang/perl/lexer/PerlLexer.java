@@ -36,6 +36,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.perl5.lang.perl.util.PerlPackageUtil.CORE_PACKAGE_FULL;
+
 public class PerlLexer extends PerlLexerGenerated
 {
 	public static final String STRING_UNDEF = "undef";
@@ -297,9 +299,9 @@ public class PerlLexer extends PerlLexerGenerated
 
 	public static final Map<String, IElementType> RESERVED_TOKEN_TYPES = new HashMap<String, IElementType>();
 	public static final Map<String, IElementType> CUSTOM_TOKEN_TYPES = new HashMap<String, IElementType>();
-	public static final Map<String, IElementType> namedOperators = new HashMap<String, IElementType>();
-	public static final Map<String, IElementType> blockNames = new HashMap<String, IElementType>();
-	public static final Map<String, IElementType> tagNames = new HashMap<String, IElementType>();
+	public static final Map<String, IElementType> NAMED_OPERATORS = new HashMap<String, IElementType>();
+	public static final Map<String, IElementType> BLOCK_NAMES = new HashMap<String, IElementType>();
+	public static final Map<String, IElementType> TAG_NAMES = new HashMap<String, IElementType>();
 	public static final TokenSet QUOTE_LIKE_STRING_OPENER_TOKENSET = TokenSet.create(
 			RESERVED_QW,
 			RESERVED_Q,
@@ -368,39 +370,39 @@ public class PerlLexer extends PerlLexerGenerated
 	static
 	{
 		// named operators
-		namedOperators.put("x", OPERATOR_X);
+		NAMED_OPERATORS.put("x", OPERATOR_X);
 
-		namedOperators.put("not", OPERATOR_NOT_LP);
-		namedOperators.put("and", OPERATOR_AND_LP);
-		namedOperators.put("or", OPERATOR_OR_LP);
-		namedOperators.put("xor", OPERATOR_XOR_LP);
+		NAMED_OPERATORS.put("not", OPERATOR_NOT_LP);
+		NAMED_OPERATORS.put("and", OPERATOR_AND_LP);
+		NAMED_OPERATORS.put("or", OPERATOR_OR_LP);
+		NAMED_OPERATORS.put("xor", OPERATOR_XOR_LP);
 
-		namedOperators.put("lt", OPERATOR_LT_STR);
-		namedOperators.put("gt", OPERATOR_GT_STR);
-		namedOperators.put("le", OPERATOR_LE_STR);
-		namedOperators.put("ge", OPERATOR_GE_STR);
-		namedOperators.put("eq", OPERATOR_EQ_STR);
-		namedOperators.put("ne", OPERATOR_NE_STR);
-		namedOperators.put("cmp", OPERATOR_CMP_STR);
+		NAMED_OPERATORS.put("lt", OPERATOR_LT_STR);
+		NAMED_OPERATORS.put("gt", OPERATOR_GT_STR);
+		NAMED_OPERATORS.put("le", OPERATOR_LE_STR);
+		NAMED_OPERATORS.put("ge", OPERATOR_GE_STR);
+		NAMED_OPERATORS.put("eq", OPERATOR_EQ_STR);
+		NAMED_OPERATORS.put("ne", OPERATOR_NE_STR);
+		NAMED_OPERATORS.put("cmp", OPERATOR_CMP_STR);
 
 		// block names
-		blockNames.put("BEGIN", BLOCK_NAME);
-		blockNames.put("UNITCHECK", BLOCK_NAME);
-		blockNames.put("CHECK", BLOCK_NAME);
-		blockNames.put("INIT", BLOCK_NAME);
-		blockNames.put("END", BLOCK_NAME);
+		BLOCK_NAMES.put("BEGIN", BLOCK_NAME);
+		BLOCK_NAMES.put("UNITCHECK", BLOCK_NAME);
+		BLOCK_NAMES.put("CHECK", BLOCK_NAME);
+		BLOCK_NAMES.put("INIT", BLOCK_NAME);
+		BLOCK_NAMES.put("END", BLOCK_NAME);
 
 		// these added for core packages, not blocks, just subs
-		blockNames.put("AUTOLOAD", BLOCK_NAME);
-		blockNames.put("DESTROY", BLOCK_NAME);
+		BLOCK_NAMES.put("AUTOLOAD", BLOCK_NAME);
+		BLOCK_NAMES.put("DESTROY", BLOCK_NAME);
 
-		PerlParserUtil.addConvertableTokens(blockNames.values().toArray(new IElementType[blockNames.values().size()]));
+		PerlParserUtil.addConvertableTokens(BLOCK_NAMES.values().toArray(new IElementType[BLOCK_NAMES.values().size()]));
 
 		// tags
-		tagNames.put("__FILE__", TAG);
-		tagNames.put("__LINE__", TAG);
-		tagNames.put("__PACKAGE__", TAG);
-		tagNames.put("__SUB__", TAG);
+		TAG_NAMES.put("__FILE__", TAG);
+		TAG_NAMES.put("__LINE__", TAG);
+		TAG_NAMES.put("__PACKAGE__", TAG);
+		TAG_NAMES.put("__SUB__", TAG);
 
 	}
 
@@ -436,7 +438,7 @@ public class PerlLexer extends PerlLexerGenerated
 	/**
 	 * Regex processor qr{} m{} s{}{}
 	 **/
-	CharSequence regexCommand = null;
+	protected IElementType regexCommand = null;
 
 	public PerlLexer(Project project)
 	{
@@ -514,9 +516,9 @@ public class PerlLexer extends PerlLexerGenerated
 
 		Set<IElementType> allTextTokens = new HashSet<IElementType>();
 
-		allTextTokens.addAll(namedOperators.values());
-		allTextTokens.addAll(blockNames.values());
-		allTextTokens.addAll(tagNames.values());
+		allTextTokens.addAll(NAMED_OPERATORS.values());
+		allTextTokens.addAll(BLOCK_NAMES.values());
+		allTextTokens.addAll(TAG_NAMES.values());
 
 		LABEL_TOKENSET = TokenSet.andNot(
 				TokenSet.orSet(
@@ -1349,7 +1351,7 @@ public class PerlLexer extends PerlLexerGenerated
 		{
 			allowSharpQuote = true;
 			isEscaped = false;
-			regexCommand = "m";
+			regexCommand = RESERVED_M;
 			sectionsNumber = 1;
 			pushState();
 			return parseRegex(getTokenStart());
@@ -1404,13 +1406,13 @@ public class PerlLexer extends PerlLexerGenerated
 	/**
 	 * Sets up regex parser
 	 */
-	public void processRegexOpener()
+	public void processRegexOpener(IElementType tokenType)
 	{
 		allowSharpQuote = true;
 		isEscaped = false;
-		regexCommand = yytext();
+		regexCommand = tokenType;
 
-		if (StringUtil.equals("s", regexCommand))    // two sections s
+		if (regexCommand == RESERVED_S)    // two sections s
 		{
 			sectionsNumber = 2;
 		}
@@ -1646,7 +1648,8 @@ public class PerlLexer extends PerlLexerGenerated
 		// check modifiers for x
 		boolean isExtended = false;
 		boolean isEvaluated = false;
-		List<Character> allowedModifiers = RegexBlock.allowedModifiers.get(regexCommand == null ? null : regexCommand.toString());
+		assert regexCommand != null;
+		List<Character> allowedModifiers = RegexBlock.ALLOWED_MODIFIERS.get(regexCommand);
 		int modifiersEnd = currentOffset;
 		ArrayList<CustomToken> modifierTokens = new ArrayList<CustomToken>();
 
@@ -1911,7 +1914,7 @@ public class PerlLexer extends PerlLexerGenerated
 				)
 		{
 
-			if ((tokenType = namedOperators.get(tokenText)) != null)
+			if ((tokenType = NAMED_OPERATORS.get(tokenText)) != null)
 			{
 				return tokenType;
 			}
@@ -1929,11 +1932,11 @@ public class PerlLexer extends PerlLexerGenerated
 			{
 				return tokenType;
 			}
-			else if ((tokenType = blockNames.get(tokenText)) != null)
+			else if ((tokenType = BLOCK_NAMES.get(tokenText)) != null)
 			{
 				return tokenType;
 			}
-			else if ((tokenType = tagNames.get(tokenText)) != null)
+			else if ((tokenType = TAG_NAMES.get(tokenText)) != null)
 			{
 				return tokenType;
 			}
@@ -1962,25 +1965,34 @@ public class PerlLexer extends PerlLexerGenerated
 	 */
 	public IElementType parsePackage()
 	{
-		String tokenText = yytext().toString();
+		CharSequence tokenText = yytext();
 
 		// check if it's cmp'
-		if (tokenText.length() > 4 && tokenText.charAt(3) == '\'' && tokenText.substring(0, 3).equals("cmp"))
+		if (tokenText.length() > 4 && tokenText.charAt(3) == '\'' && tokenText.subSequence(0, 3).equals("cmp"))
 		{
 			yypushback(tokenText.length() - 3);
 			return getIdentifierToken();
 		}
 		// check if it's qw|qr|qx|qq|tr|ne|eq|gt|lt|ge|le'
-		else if (tokenText.length() > 3 && tokenText.charAt(2) == '\'' && PACKAGE_EXCEPTIONS.contains(tokenText.substring(0, 2)))
+		else if (tokenText.length() > 3 && tokenText.charAt(2) == '\'' && PACKAGE_EXCEPTIONS.contains(tokenText.subSequence(0, 2).toString()))
 		{
 			yypushback(tokenText.length() - 2);
 			return getIdentifierToken();
 		}
 		// check if it's m|q|s|y'
-		else if (tokenText.length() > 2 && tokenText.charAt(1) == '\'' && PACKAGE_EXCEPTIONS.contains(tokenText.substring(0, 1)))
+		else if (tokenText.length() > 2 && tokenText.charAt(1) == '\'' && PACKAGE_EXCEPTIONS.contains(tokenText.subSequence(0, 1).toString()))
 		{
 			yypushback(tokenText.length() - 1);
 			return getIdentifierToken();
+		}
+
+		if (StringUtil.startsWith(tokenText, CORE_PACKAGE_FULL))
+		{
+			IElementType reservedTokenType = RESERVED_TOKEN_TYPES.get(tokenText.subSequence(CORE_PACKAGE_FULL.length(), tokenText.length()).toString());
+			if (reservedTokenType != null)
+			{
+				return reservedTokenType;
+			}
 		}
 
 		Matcher m = AMBIGUOUS_PACKAGE_PATTERN.matcher(tokenText);
@@ -2129,7 +2141,7 @@ public class PerlLexer extends PerlLexerGenerated
 			}
 			else if (tokenType == RESERVED_S || tokenType == RESERVED_M || tokenType == RESERVED_QR)
 			{
-				processRegexOpener();
+				processRegexOpener(tokenType);
 			}
 			else if (tokenType == RESERVED_MY || tokenType == RESERVED_OUR || tokenType == RESERVED_STATE)
 			{

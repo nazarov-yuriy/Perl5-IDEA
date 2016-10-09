@@ -19,39 +19,49 @@ package parserHeavy;
 /**
  * Created by hurricup on 28.02.2016.
  */
-public class PerlSourcesParserTestCmd extends PerlSourcesParserTestAbstract
+
+import categories.Heavy;
+import org.junit.experimental.categories.Category;
+import parser.PerlParserTestBase;
+
+@Category(Heavy.class)
+public class PerlSourcesParserTestBigmem extends PerlParserTestBase
 {
-	private static final String GROUP = "cmd";
+	public static final String DATA_PATH = "testDataHeavy/parser/perl5/bigmem";
 
 	@Override
-	protected String getTestsGroup()
+	protected String getTestDataPath()
 	{
-		return GROUP;
+		return DATA_PATH;
 	}
 
-	public void testelsif()
+	public void testindex()
 	{
-		doTest("elsif");
+		doTest("index");
 	}
 
-	public void testfor()
+	public void testpos()
 	{
-		doTest("for");
+		doTest("pos");
 	}
 
-	public void testmod()
+	public void testread()
 	{
-		doTest("mod");
+		doTest("read");
 	}
 
-	public void testsubval()
+	public void testregexp()
 	{
-		doTest("subval");
+		doTest("regexp");
 	}
 
-	public void testswitch()
+	public void testsubst()
 	{
-		doTest("switch");
+		doTest("subst");
 	}
 
+	public void testvec()
+	{
+		doTest("vec");
+	}
 }

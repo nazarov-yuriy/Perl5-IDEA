@@ -341,8 +341,6 @@ limitations under the License.
 
 	implements("named_block|conditional_block|unconditional_block")="com.perl5.lang.perl.psi.properties.PerlStatementsContainer"
 
-	extends("namespace_content")=block
-
 	implements("label_declaration")="com.perl5.lang.perl.psi.PerlLabelDeclaration"
 	extends("label_declaration")="com.perl5.lang.perl.psi.mixins.PerlLabelDeclarationImplMixin"
 
@@ -422,10 +420,12 @@ limitations under the License.
 
     mixin("method")="com.perl5.lang.perl.psi.mixins.PerlMethodImplMixin";
     implements("method")="com.perl5.lang.perl.psi.PerlMethod";
+
+    implements("namespace_content")="com.perl5.lang.perl.psi.properties.PerlStatementsContainer"
  }
 
 ///////////////////////////// main code structure //////////////////////////////////////////////////////////////////////
-root ::= <<parseFileContent>>
+root ::= <<parseFileContent>> file_items
 // invoked by parser
 private file_items ::= file_item*
 
@@ -451,15 +451,15 @@ private statement_item ::=
 		| <<parseBadCharacters>> // Fallback for bad characters
 
 namespace_definition ::= namespace_definition_name (block | <<parseSemicolon>> <<parseNamespaceContent>>) {pin=1 recoverWhile=recover_statement}
-private namespace_definition_name ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_PACKAGE <<mergePackageName>> [perl_version] {pin=3 recoverWhile=recover_statement}
+private namespace_definition_name ::= RESERVED_PACKAGE <<mergePackageName>> [perl_version] {pin=1 recoverWhile=recover_statement}
 namespace_content ::= real_namespace_content
-private real_namespace_content ::= file_item *  {extends=block recoverWhile=recover_statement} //
+private real_namespace_content ::= {!RESERVED_PACKAGE file_item} *  {extends=block recoverWhile=recover_statement} //
 
 block ::= LEFT_BRACE block_content RIGHT_BRACE {pin=1} // !OPERATOR_DEREFERENCE  pin disabled for dereference of anon hash; probably this slows us down
 private block_content ::= file_item * {recoverWhile=recover_statement}
 
 nyi_statement ::= OPERATOR_HELLIP
-format_definition ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_FORMAT [IDENTIFIER] OPERATOR_ASSIGN [FORMAT] FORMAT_TERMINATOR {pin=2}
+format_definition ::=  RESERVED_FORMAT [IDENTIFIER] OPERATOR_ASSIGN [FORMAT] FORMAT_TERMINATOR {pin=1}
 
 private compound_statement ::=
     sub_definition
@@ -476,10 +476,10 @@ private compound_statement ::=
 
 named_block ::= BLOCK_NAME block
 
-if_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_IF conditional_block if_compound_elsif * [if_compound_else]  {pin=2}
-unless_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_UNLESS conditional_block if_compound_elsif * [if_compound_else]  {pin=2 extends=if_compound}
-private if_compound_elsif ::= [POD] [PACKAGE_CORE_IDENTIFIER] RESERVED_ELSIF conditional_block  {pin=3}
-private if_compound_else ::= [POD] [PACKAGE_CORE_IDENTIFIER] RESERVED_ELSE unconditional_block {pin=3}
+if_compound ::=  RESERVED_IF conditional_block if_compound_elsif * [if_compound_else]  {pin=1}
+unless_compound ::=  RESERVED_UNLESS conditional_block if_compound_elsif * [if_compound_else]  {pin=1}
+private if_compound_elsif ::= [POD]  RESERVED_ELSIF conditional_block  {pin=2}
+private if_compound_else ::= [POD]  RESERVED_ELSE unconditional_block {pin=2}
 unconditional_block ::= block
 
 conditional_block ::= condition_statement block {pin=1 name="Conditional block"}
@@ -490,22 +490,22 @@ condition_statement_while ::= LEFT_PAREN [condition_statement_expr] RIGHT_PAREN 
 private condition_statement_expr ::= expr {recoverWhile=recover_condition_statement_expr}
 private recover_condition_statement_expr ::= !(LEFT_BRACE|RIGHT_PAREN)
 
-given_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_GIVEN conditional_block  {pin=2}
-when_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_WHEN conditional_block  {pin=2}
-default_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_DEFAULT block {pin=2}
+given_compound ::=  RESERVED_GIVEN conditional_block  {pin=1}
+when_compound ::=  RESERVED_WHEN conditional_block  {pin=1}
+default_compound ::=  RESERVED_DEFAULT block {pin=1}
 
-while_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_WHILE conditional_block_while [continue_block]  {pin=2}
-until_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_UNTIL conditional_block [continue_block]  {pin=2}
+while_compound ::=  RESERVED_WHILE conditional_block_while [continue_block]  {pin=1}
+until_compound ::=  RESERVED_UNTIL conditional_block [continue_block]  {pin=1}
 
-continue_block ::= [POD] [PACKAGE_CORE_IDENTIFIER] RESERVED_CONTINUE block {pin=3}
+continue_block ::= [POD] RESERVED_CONTINUE block {pin=2}
 
 private block_compound ::= block [continue_block]
 
 
 // for/foreach
 // fixme why the heck there is no parsing error on "for" and there is a error on "use", both pinned
-for_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_FOR for_arguments {pin=2}
-foreach_compound ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_FOREACH for_arguments  {pin=2}
+for_compound ::=  RESERVED_FOR for_arguments {pin=1}
+foreach_compound ::=  RESERVED_FOREACH for_arguments  {pin=1}
 private for_arguments ::=
     for_iterator block
     | for_list_statement block_compound
@@ -531,12 +531,12 @@ private normal_statement ::= expr [<<parseStatementModifier>>] {pin=1}
 //private normal_statement_body ::= expr {recoverWhile=recover_statement}
 
 // fixme we can't pin this because we need to distinct declaration and definition
-sub_definition ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_SUB canonical_sub_name sub_definition_parameters block
+sub_definition ::=  RESERVED_SUB canonical_sub_name sub_definition_parameters block
 
 private sub_definition_parameters ::= [sub_prototype_or_signature] [sub_attributes]
 private sub_prototype_or_signature ::= sub_signature |sub_prototype
 
-sub_declaration ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_SUB canonical_sub_name sub_declaration_parameters
+sub_declaration ::=  RESERVED_SUB canonical_sub_name sub_declaration_parameters
 private sub_declaration_parameters ::= [sub_prototype] [sub_attributes]
 
 private canonical_sub_name ::= [namespace_canonical] sub_definition_name
@@ -568,15 +568,15 @@ private sub_attributes ::= COLON attribute ([COLON] attribute)*  {pin=1}
 private var_attributes ::= COLON attribute ([COLON] attribute)*  // {pin=1} pin disable because of $something ? my $var : $other;
 attribute ::= IDENTIFIER [string_sq_parsed]
 
-last_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_LAST [lnr_param] {pin=2}
-next_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_NEXT [lnr_param] {pin=2}
-redo_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_REDO [lnr_param] {pin=2}
-goto_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_GOTO [goto_param] {pin=2}
+last_expr ::=  RESERVED_LAST [lnr_param] {pin=1}
+next_expr ::=  RESERVED_NEXT [lnr_param] {pin=1}
+redo_expr ::=  RESERVED_REDO [lnr_param] {pin=1}
+goto_expr ::=  RESERVED_GOTO [goto_param] {pin=1}
 
-return_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_RETURN [list_expr] {pin=2}
+return_expr ::=  RESERVED_RETURN [list_expr] {pin=1}
 
-private lnr_param ::= <<convertIdentifier LABEL>> | expr // fixme scalar_expr ?
-private goto_param ::= <<convertIdentifier LABEL>> | OPERATOR_BITWISE_AND <<convertIdentifier SUB>> | expr // fixme same, scalar expr?
+private lnr_param ::= <<convertIdentifier 'LABEL '>> | expr // fixme scalar_expr ?
+private goto_param ::= <<convertIdentifier 'LABEL '>> | OPERATOR_BITWISE_AND <<convertIdentifier 'SUB '>> | expr // fixme same, scalar expr?
 
 
 statement_modifier ::=
@@ -588,13 +588,13 @@ statement_modifier ::=
     | foreach_statement_modifier
     | when_statement_modifier
 
-if_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_IF expr {pin=2 name="Postfix if"}
-unless_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_UNLESS expr {pin=2 name="Postfix unless"}
-while_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_WHILE expr {pin=2 name="Postfix while"}
-until_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_UNTIL expr {pin=2 name="Postfix until"}
-for_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_FOR expr  {pin=2 name="Postfix for"}
-foreach_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_FOREACH expr {pin=2 name="Postfix foreach"}
-when_statement_modifier ::=  [PACKAGE_CORE_IDENTIFIER]  RESERVED_WHEN expr {pin=2 name="Postfix when"}
+if_statement_modifier ::=    RESERVED_IF expr {pin=1 name="Postfix if"}
+unless_statement_modifier ::=    RESERVED_UNLESS expr {pin=1 name="Postfix unless"}
+while_statement_modifier ::=    RESERVED_WHILE expr {pin=1 name="Postfix while"}
+until_statement_modifier ::=    RESERVED_UNTIL expr {pin=1 name="Postfix until"}
+for_statement_modifier ::=    RESERVED_FOR expr  {pin=1 name="Postfix for"}
+foreach_statement_modifier ::=    RESERVED_FOREACH expr {pin=1 name="Postfix foreach"}
+when_statement_modifier ::=    RESERVED_WHEN expr {pin=1 name="Postfix when"}
 
 private use_statements ::= // fixme these shold be recovered otherwise, cause it has no statement modifiers
   use_statement_constant
@@ -604,21 +604,21 @@ private use_statements ::= // fixme these shold be recovered otherwise, cause it
 private no_statements ::= // fixme these shold be recovered otherwise, cause it has no statement modifiers
   no_statement
 
-use_statement ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_USE use_no_parameters {pin=2}
-no_statement ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_NO use_no_parameters {pin=2}
+upper use_statement ::=  RESERVED_USE use_no_parameters {pin=1}
+upper no_statement ::=  RESERVED_NO use_no_parameters {pin=1}
 
 private use_no_parameters ::= use_module_parameters | use_version_parameters
 private use_module_parameters ::= <<mergePackageName>> [perl_version [comma]] [<<parseStringifiedExpression>>];
 private use_version_parameters ::= perl_version;
 
-use_statement_constant ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_USE <<checkAndCollapseToken PACKAGE PACKAGE_PRAGMA_CONSTANT>> [perl_version] [use_constant_parameters] {pin=3}
+upper use_statement_constant ::=  RESERVED_USE <<checkAndCollapseToken 'PACKAGE, PACKAGE_PRAGMA_CONSTANT'>> [perl_version] [use_constant_parameters] {pin=2}
 private use_constant_parameters ::=
   constants_block
   | single_constant_definition
   | expr
 
 // other name to extend declaration, not variable
-use_vars_statement ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_USE <<checkAndCollapseToken PACKAGE PACKAGE_PRAGMA_VARS>> [perl_version] [<<parseUseVarsParameters>>] {pin=3}
+upper use_vars_statement ::=  RESERVED_USE <<checkAndCollapseToken 'PACKAGE, PACKAGE_PRAGMA_VARS'>> [perl_version] [<<parseUseVarsParameters>>] {pin=2}
 
 constants_block ::= LEFT_BRACE [constants_block_content] RIGHT_BRACE {pin=1}
 private constants_block_content ::= constant_block_content_element (comma constant_block_content_element) * [comma+] {recoverWhile=recover_constants_block}
@@ -630,12 +630,10 @@ private single_constant_definition ::= constant_definition {recoverWhile=recover
 
 constant_definition ::= string comma scalar_expr
 
-undef_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_UNDEF (undef_params | LEFT_PAREN undef_params RIGHT_PAREN) ? {pin=2}
-private undef_params ::=
-    deref_expr
-    | variable
+undef_expr ::=  RESERVED_UNDEF (undef_params | LEFT_PAREN undef_params RIGHT_PAREN) ? {pin=1}
+private undef_params ::= deref_expr | variable
 
-require_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_REQUIRE (<<mergeRequirePackageName>> | perl_version | scalar_expr)  {pin=2}// multiline string is possible too
+require_expr ::=  RESERVED_REQUIRE (<<mergeRequirePackageName>> | perl_version | scalar_expr)  {pin=1}// multiline string is possible too
 
 private recover_statement ::= <<recoverStatement>>
 
@@ -682,32 +680,47 @@ private immutable_expr ::= <<parseExpressionLevel 21>>
 named_unary_expr ::= { OPERATOR_FILETEST | <<isUnaryOperator>> method } [unary_expr]
 named_list_expr ::= <<parseListExpression>>
 
+// ordered for best performance of perltidy
 term_expr ::=
-	<<parseParserExtensionTerm>>
-    | variable_declaration
+    <<parseScalarOrElement>>	// scalar, cast or elements
+    | string
+    | number_constant
+    | variable_declaration_lexical
     | <<parseListOrListElement>> // fixme this must be in array with qw
-    | scalar_constant
-    | do_expr
+    | <<parseArrayOrSlice>>		// array, cast or slice
+    | match_regex
+    | return_expr
+    | hash_variable
+    | hash_cast_expr
+    | anon_array
+    | undef_expr
+    | print_expr
+	| replacement_regex
     | sub_expr
     | eval_expr
-    | grep_expr
-    | return_expr
-    | map_expr
+    | do_expr
+	| anon_hash
+    | variable_declaration_local
     | sort_expr
-    | regex_term
+    | grep_expr
+    | map_expr
+
+    | <<parseGlobOrElement>>	// glob
+    | array_index_variable
+    | tag_scalar
+    | variable_declaration_global
+    | compile_regex
+	| tr_regex
     | file_read_expr
-    | print_expr
     | require_expr
-    | undef_expr
     | perl_handle_expr
+	| <<parseParserExtensionTerm>>
     | sub_call_expr
-    | reference_value_expr
-    | variable_expr
     | namespace_expr
 
 
-grep_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_GREP grep_map_arguments {pin=2}
-map_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_MAP grep_map_arguments {pin=2}
+grep_expr ::=  RESERVED_GREP grep_map_arguments {pin=1}
+map_expr ::=  RESERVED_MAP grep_map_arguments {pin=1}
 
 private grep_map_arguments ::=
     LEFT_PAREN grep_map_arguments_ RIGHT_PAREN !LEFT_BRACKET
@@ -720,7 +733,7 @@ private grep_map_arguments_ ::=
 
 private grep_map_sort_tail ::= file_read_forced_expr | list_expr
 
-sort_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_SORT sort_arguments {pin=2}
+sort_expr ::=  RESERVED_SORT sort_arguments {pin=1}
 private sort_arguments ::=
     LEFT_PAREN sort_arguments_ RIGHT_PAREN !LEFT_BRACKET
     | sort_arguments_
@@ -730,8 +743,6 @@ private sort_arguments_ ::=
     | block [comma] grep_map_sort_tail
     | callable grep_map_sort_tail
     | grep_map_sort_tail
-
-private variable_expr ::= variable | array_index_variable
 
 namespace_expr ::= <<mergePackageName>>
 parenthesised_expr ::= LEFT_PAREN parenthesised_expr_content RIGHT_PAREN {pin=1 name="Parenthesised expression"}
@@ -747,7 +758,7 @@ pref_mm_expr ::= OPERATOR_MINUS_MINUS expr
 suff_pp_expr ::= expr (OPERATOR_PLUS_PLUS|OPERATOR_MINUS_MINUS)
 
 pow_expr ::= expr (pow_operator expr)+ { rightAssociative=true }
-private pow_operator ::= <<checkAndCollapseToken OPERATOR_POW OPERATOR_MUL OPERATOR_MUL>> !OPERATOR_ASSIGN
+private pow_operator ::= <<checkAndCollapseToken 'OPERATOR_POW, OPERATOR_MUL, OPERATOR_MUL'>> !OPERATOR_ASSIGN
 
 private op_5_expr ::= ref_expr | prefix_minus_as_string_expr | prefix_unary_expr
 ref_expr ::= OPERATOR_REFERENCE referencable_expr { rightAssociative=true }
@@ -756,8 +767,8 @@ prefix_minus_as_string_expr ::= <<parseMinusBareword>>
 private operator_prefix_unary ::= (
 	OPERATOR_BITWISE_NOT
 	| OPERATOR_NOT
-	| <<checkAndConvertToken OPERATOR_PLUS_UNARY OPERATOR_PLUS>>
-	| <<checkAndConvertToken OPERATOR_MINUS_UNARY OPERATOR_MINUS>>
+	| <<checkAndConvertToken 'OPERATOR_PLUS_UNARY, OPERATOR_PLUS'>>
+	| <<checkAndConvertToken 'OPERATOR_MINUS_UNARY, OPERATOR_MINUS'>>
 	) !OPERATOR_ASSIGN // not sure we need !OPERATOR_ASSIGN
 
 regex_expr ::= expr (OPERATOR_RE|OPERATOR_NOT_RE) expr
@@ -773,8 +784,8 @@ private operator_shift ::= (OPERATOR_SHIFT_LEFT|OPERATOR_SHIFT_RIGHT) !OPERATOR_
 
 compare_expr ::= expr (operator_compare) expr
 private operator_compare ::=
-    <<checkAndCollapseToken OPERATOR_GE_NUMERIC OPERATOR_GT_NUMERIC OPERATOR_ASSIGN>>   // >=
-    |<<checkAndCollapseToken OPERATOR_LE_NUMERIC OPERATOR_LT_NUMERIC OPERATOR_ASSIGN>>  // <=
+    <<checkAndCollapseToken 'OPERATOR_GE_NUMERIC, OPERATOR_GT_NUMERIC, OPERATOR_ASSIGN'>>   // >=
+    |<<checkAndCollapseToken 'OPERATOR_LE_NUMERIC, OPERATOR_LT_NUMERIC, OPERATOR_ASSIGN'>>  // <=
     |OPERATOR_GT_NUMERIC
     |OPERATOR_LT_NUMERIC
 
@@ -785,13 +796,13 @@ private operator_compare ::=
 
 equal_expr ::= expr operator_equal expr
 private operator_equal ::=
-    <<checkAndCollapseToken OPERATOR_EQ_NUMERIC OPERATOR_ASSIGN OPERATOR_ASSIGN>> // ==
-    |<<checkAndCollapseToken OPERATOR_NE_NUMERIC OPERATOR_NOT OPERATOR_ASSIGN>>  // !=
+    <<checkAndCollapseToken 'OPERATOR_EQ_NUMERIC, OPERATOR_ASSIGN, OPERATOR_ASSIGN'>> // ==
+    |<<checkAndCollapseToken 'OPERATOR_NE_NUMERIC, OPERATOR_NOT, OPERATOR_ASSIGN'>>  // !=
     |OPERATOR_CMP_NUMERIC
     |OPERATOR_EQ_STR
     |OPERATOR_NE_STR
     |OPERATOR_CMP_STR
-    |<<checkAndCollapseToken OPERATOR_SMARTMATCH OPERATOR_BITWISE_NOT OPERATOR_BITWISE_NOT>> // ~~
+    |<<checkAndCollapseToken 'OPERATOR_SMARTMATCH, OPERATOR_BITWISE_NOT, OPERATOR_BITWISE_NOT'>> // ~~
 
 bitwise_and_expr ::= expr (OPERATOR_BITWISE_AND !OPERATOR_ASSIGN expr)+
 
@@ -818,22 +829,22 @@ private assign_or_flow_expr ::=
 assign_expr ::= expr (operator_assign expr ) + { rightAssociative=true }
 
 private operator_assign ::=
-    <<checkAndCollapseToken OPERATOR_POW_ASSIGN OPERATOR_MUL OPERATOR_MUL OPERATOR_ASSIGN>>  // **=
-    |<<checkAndCollapseToken OPERATOR_PLUS_ASSIGN OPERATOR_PLUS OPERATOR_ASSIGN>>      // +=
-    |<<checkAndCollapseToken OPERATOR_MINUS_ASSIGN OPERATOR_MINUS OPERATOR_ASSIGN>>     // -=
-    |<<checkAndCollapseToken OPERATOR_MUL_ASSIGN OPERATOR_MUL OPERATOR_ASSIGN>>       // *=
-    |<<checkAndCollapseToken OPERATOR_DIV_ASSIGN OPERATOR_DIV OPERATOR_ASSIGN>>       // /=
-    |<<checkAndCollapseToken OPERATOR_MOD_ASSIGN OPERATOR_MOD OPERATOR_ASSIGN>>       // %=
-    |<<checkAndCollapseToken OPERATOR_CONCAT_ASSIGN OPERATOR_CONCAT OPERATOR_ASSIGN>>    // .=
-    |<<checkAndCollapseToken OPERATOR_X_ASSIGN OPERATOR_X OPERATOR_ASSIGN>>         // x=
-    |<<checkAndCollapseToken OPERATOR_BITWISE_AND_ASSIGN OPERATOR_BITWISE_AND OPERATOR_ASSIGN>>   // &=
-    |<<checkAndCollapseToken OPERATOR_BITWISE_OR_ASSIGN OPERATOR_BITWISE_OR OPERATOR_ASSIGN>>    // |=
-    |<<checkAndCollapseToken OPERATOR_BITWISE_XOR_ASSIGN OPERATOR_BITWISE_XOR OPERATOR_ASSIGN>>   // ^=
-    |<<checkAndCollapseToken OPERATOR_SHIFT_LEFT_ASSIGN OPERATOR_SHIFT_LEFT OPERATOR_ASSIGN>>    //  <<=
-    |<<checkAndCollapseToken OPERATOR_SHIFT_RIGHT_ASSIGN OPERATOR_SHIFT_RIGHT OPERATOR_ASSIGN>>   //  >>=
-    |<<checkAndCollapseToken OPERATOR_AND_ASSIGN OPERATOR_AND OPERATOR_ASSIGN>>           //  &&=
-    |<<checkAndCollapseToken OPERATOR_OR_ASSIGN OPERATOR_OR OPERATOR_ASSIGN>>            //  ||=
-    |<<checkAndCollapseToken OPERATOR_OR_DEFINED_ASSIGN OPERATOR_OR_DEFINED OPERATOR_ASSIGN>>    //  //=
+    <<checkAndCollapseToken 'OPERATOR_POW_ASSIGN, OPERATOR_MUL, OPERATOR_MUL, OPERATOR_ASSIGN'>>  // **=
+    |<<checkAndCollapseToken 'OPERATOR_PLUS_ASSIGN, OPERATOR_PLUS, OPERATOR_ASSIGN'>>      // +=
+    |<<checkAndCollapseToken 'OPERATOR_MINUS_ASSIGN, OPERATOR_MINUS, OPERATOR_ASSIGN'>>     // -=
+    |<<checkAndCollapseToken 'OPERATOR_MUL_ASSIGN, OPERATOR_MUL, OPERATOR_ASSIGN'>>       // *=
+    |<<checkAndCollapseToken 'OPERATOR_DIV_ASSIGN, OPERATOR_DIV, OPERATOR_ASSIGN'>>       // /=
+    |<<checkAndCollapseToken 'OPERATOR_MOD_ASSIGN, OPERATOR_MOD, OPERATOR_ASSIGN'>>       // %=
+    |<<checkAndCollapseToken 'OPERATOR_CONCAT_ASSIGN, OPERATOR_CONCAT, OPERATOR_ASSIGN'>>    // .=
+    |<<checkAndCollapseToken 'OPERATOR_X_ASSIGN, OPERATOR_X, OPERATOR_ASSIGN'>>         // x=
+    |<<checkAndCollapseToken 'OPERATOR_BITWISE_AND_ASSIGN, OPERATOR_BITWISE_AND, OPERATOR_ASSIGN'>>   // &=
+    |<<checkAndCollapseToken 'OPERATOR_BITWISE_OR_ASSIGN, OPERATOR_BITWISE_OR, OPERATOR_ASSIGN'>>    // |=
+    |<<checkAndCollapseToken 'OPERATOR_BITWISE_XOR_ASSIGN, OPERATOR_BITWISE_XOR, OPERATOR_ASSIGN'>>   // ^=
+    |<<checkAndCollapseToken 'OPERATOR_SHIFT_LEFT_ASSIGN, OPERATOR_SHIFT_LEFT, OPERATOR_ASSIGN'>>    //  <<=
+    |<<checkAndCollapseToken 'OPERATOR_SHIFT_RIGHT_ASSIGN, OPERATOR_SHIFT_RIGHT, OPERATOR_ASSIGN'>>   //  >>=
+    |<<checkAndCollapseToken 'OPERATOR_AND_ASSIGN, OPERATOR_AND, OPERATOR_ASSIGN'>>           //  &&=
+    |<<checkAndCollapseToken 'OPERATOR_OR_ASSIGN, OPERATOR_OR, OPERATOR_ASSIGN'>>            //  ||=
+    |<<checkAndCollapseToken 'OPERATOR_OR_DEFINED_ASSIGN, OPERATOR_OR_DEFINED, OPERATOR_ASSIGN'>>    //  //=
     |OPERATOR_ASSIGN !OPERATOR_ASSIGN
 
 comma_sequence_expr ::= expr <<parseCommaSequence>> // fixme implement pinnning
@@ -843,12 +854,12 @@ lp_and_expr ::= expr (OPERATOR_AND_LP expr)+
 
 lp_or_xor_expr ::= expr ((OPERATOR_OR_LP|OPERATOR_XOR_LP) expr)+
 
-print_expr ::= [PACKAGE_CORE_IDENTIFIER] (RESERVED_PRINT|RESERVED_PRINTF|RESERVED_SAY) ( LEFT_PAREN [print_arguments] RIGHT_PAREN | [print_arguments] ) {pin=2}
+print_expr ::=  (RESERVED_PRINT|RESERVED_PRINTF|RESERVED_SAY) ( LEFT_PAREN [print_arguments] RIGHT_PAREN | [print_arguments] ) {pin=1}
 private print_arguments ::= <<parsePrintArguments>>
 private print_arguments_content ::= print_handle expr | expr
 print_handle ::=  <<parsePrintHandle>> | perl_handle
 
-sub_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_SUB sub_definition_parameters block  // fixme make sure that this one checked after definition and declaration
+sub_expr ::=  RESERVED_SUB sub_definition_parameters block  // fixme make sure that this one checked after definition and declaration
 
 sub_call_expr ::= leftward_call_expr | rightward_call_expr
 
@@ -862,31 +873,25 @@ private parse_call_arguments ::=
     | block [[comma] list_expr]
     | list_expr
 
-file_read_expr ::= <<checkFileReadToken>> [read_handle | <<parseFileHandleAsString>> ] <<checkAndConvertToken RIGHT_ANGLE OPERATOR_GT_NUMERIC>>
+file_read_expr ::= <<checkFileReadToken>> [read_handle | <<parseFileHandleAsString>> ] <<checkAndConvertToken 'RIGHT_ANGLE, OPERATOR_GT_NUMERIC'>>
 // this one is used to force parsing, like list_epxr after map, grep or sort; Not sure if we need this after implementing chckFileReadToken
-file_read_forced_expr ::= <<checkAndConvertToken LEFT_ANGLE OPERATOR_LT_NUMERIC>> [read_handle | <<parseFileHandleAsString>> ] <<checkAndConvertToken RIGHT_ANGLE OPERATOR_GT_NUMERIC>>
+file_read_forced_expr ::= <<checkAndConvertToken 'LEFT_ANGLE, OPERATOR_LT_NUMERIC'>> [read_handle | <<parseFileHandleAsString>> ] <<checkAndConvertToken 'RIGHT_ANGLE, OPERATOR_GT_NUMERIC'>>
 
 read_handle ::= <<parseReadHandle>>
 
 ////////////////////////// regular expressions /////////////////////////////////////////////////////////////////////////
-private regex_term ::=
-    compile_regex
-    | replacement_regex
-    | tr_regex
-    | match_regex
-
 // pinning quotes leads to bug with replacement block
-compile_regex ::= [PACKAGE_CORE_IDENTIFIER]  RESERVED_QR match_regex_body {pin=2}
-match_regex ::= [PACKAGE_CORE_IDENTIFIER]  [RESERVED_M] match_regex_body
+compile_regex ::=   RESERVED_QR match_regex_body {pin=1}
+match_regex ::=   [RESERVED_M] match_regex_body
 private match_regex_body ::= regex_match REGEX_QUOTE_CLOSE [perl_regex_modifiers]
 
 replacement_regex ::=
-    [PACKAGE_CORE_IDENTIFIER] RESERVED_S
+     RESERVED_S
     regex_match
     replacement_replace
     REGEX_QUOTE_CLOSE
     [perl_regex_modifiers]
-    {pin=2}
+    {pin=1}
 
 private regex_match ::=
   REGEX_QUOTE_OPEN [perl_regex]
@@ -900,21 +905,17 @@ private regex_code ::= file_item+ {recoverWhile=recover_regex_code}
 private recover_regex_code ::= !(REGEX_QUOTE_CLOSE)
 
 perl_regex_modifiers ::= REGEX_MODIFIER +
-perl_regex ::= <<parseRegexContent false>>
+perl_regex ::= <<parseRegexContent 'false'>>
 private perl_regex_items ::= perl_regex_item +
 
-private perl_regex_item ::=
-  interpolated_constructs
-  | <<convertRegexToken>>
+private perl_regex_item ::= interpolated_constructs | <<convertRegexToken>>
 
-perl_regex_ex ::= <<parseRegexContent true>> {extends=perl_regex}
+perl_regex_ex ::= <<parseRegexContent 'true'>> {extends=perl_regex}
 private perl_regex_ex_items ::= perl_regex_item_ex +
 
-private perl_regex_item_ex ::=
-  interpolated_constructs
-  | <<convertRegexTokenEx>>
+private perl_regex_item_ex ::= interpolated_constructs | <<convertRegexTokenEx>>
 
-tr_regex ::= [PACKAGE_CORE_IDENTIFIER] (RESERVED_TR|RESERVED_Y) tr_search tr_replacement [tr_modifiers] {pin=2}
+tr_regex ::=  (RESERVED_TR|RESERVED_Y) tr_search tr_replacement [tr_modifiers] {pin=1}
 private tr_search ::= REGEX_QUOTE_OPEN [tr_searchlist] {pin=1}
 tr_searchlist ::= STRING_CONTENT
 private tr_replacement ::= {REGEX_QUOTE | REGEX_QUOTE_CLOSE REGEX_QUOTE_OPEN} [tr_replacementlist] REGEX_QUOTE_CLOSE {pin=1}
@@ -923,8 +924,8 @@ tr_modifiers ::= REGEX_MODIFIER +
 
 ////////////////////////// end of regular expressions //////////////////////////////////////////////////////////////////
 
-do_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_DO eval_argument {pin=2}
-eval_expr ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_EVAL [eval_argument] {pin=2}
+do_expr ::=  RESERVED_DO eval_argument {pin=1}
+eval_expr ::=  RESERVED_EVAL [eval_argument] {pin=1}
 private eval_argument ::= parenthesised_expr | block | expr
 
 private variable_declaration ::=
@@ -933,9 +934,9 @@ private variable_declaration ::=
     | variable_declaration_local
 
 // @todo attributes support
-variable_declaration_local ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_LOCAL [<<mergePackageName>>]  local_variable_declaration_variation {pin=2}
-variable_declaration_lexical ::= [PACKAGE_CORE_IDENTIFIER] (RESERVED_MY | RESERVED_STATE) [<<mergePackageName>>] variable_declaration_variation [var_attributes] {pin=2}
-variable_declaration_global ::= [PACKAGE_CORE_IDENTIFIER] RESERVED_OUR [<<mergePackageName>>] variable_declaration_variation [var_attributes] {pin=2}
+variable_declaration_local ::=  RESERVED_LOCAL [<<mergePackageName>>]  local_variable_declaration_variation {pin=1}
+variable_declaration_lexical ::=  (RESERVED_MY | RESERVED_STATE) [<<mergePackageName>>] variable_declaration_variation [var_attributes] {pin=1}
+variable_declaration_global ::=  RESERVED_OUR [<<mergePackageName>>] variable_declaration_variation [var_attributes] {pin=1}
 
 private local_variable_declaration_variation ::= local_parenthesised_declaration | local_variable_declaration_argument
 private local_parenthesised_declaration ::= LEFT_PAREN local_variable_declaration_argument (comma + local_variable_declaration_argument ) * comma * RIGHT_PAREN {pin=1}
@@ -945,45 +946,32 @@ private variable_declaration_variation ::= variable_parenthesised_declaration | 
 private variable_parenthesised_declaration ::= LEFT_PAREN variable_parenthesised_declaration_contents RIGHT_PAREN {pin=1}
 private variable_parenthesised_declaration_contents ::= strict_variable_declaration_argument (comma + strict_variable_declaration_argument ) * comma*
 
-private strict_variable_declaration_argument ::= strict_variable_declaration_wrapper | [PACKAGE_CORE_IDENTIFIER] RESERVED_UNDEF
-private variable_declaration_argument ::= variable_declaration_wrapper | [PACKAGE_CORE_IDENTIFIER] RESERVED_UNDEF
+private strict_variable_declaration_argument ::= strict_variable_declaration_wrapper |  RESERVED_UNDEF
+private variable_declaration_argument ::= variable_declaration_wrapper |  RESERVED_UNDEF
 
 private strict_variable_declaration_wrapper ::= variable_declaration_wrapper !(LEFT_BRACE | LEFT_BRACKET | OPERATOR_DEREFERENCE )
 variable_declaration_wrapper ::= lexical_variable
 
 /////////////////////////////////// REFERENCES /////////////////////////////////////////////////////////////////////////
-// most of the references created by \ operator, but some - don't
-private reference_value_expr ::=
-    anon_array
-    | anon_hash
-    | sub_expr
-
 anon_array ::= LEFT_BRACKET [expr] RIGHT_BRACKET //{pin=1}
 anon_hash ::= LEFT_BRACE [expr] RIGHT_BRACE <<validateAnonHashSuffix>>  // fixme pin here after solving problem with code block and prototypes
 
 //////////////////////////// END OF REFERENCES /////////////////////////////////////////////////////////////////////////
 
 // fixme it's not a variable, its variable expression
-private variable ::= scalar | array | hash | glob
-
-private array ::= <<parseArrayOrSlice>>
+private variable ::= <<parseScalarOrElement>> | <<parseArrayOrSlice>> | hash_variable | hash_cast_expr | <<parseGlobOrElement>>
 
 private array_primitive ::=
     array_variable
     | array_cast_expr
     | string_list
+
 array_array_slice ::= array_primitive array_index
 array_hash_slice ::= array_primitive hash_index
 
 array_cast_expr ::= SIGIL_ARRAY cast_target
 
-private hash ::=
-    hash_variable
-    | hash_cast_expr
-
-hash_cast_expr ::= <<parseAmbiguousSigil OPERATOR_MOD SIGIL_HASH>> cast_target
-
-private scalar ::= <<parseScalarOrElement>>
+hash_cast_expr ::= <<parseAmbiguousSigil 'OPERATOR_MOD, SIGIL_HASH'>> cast_target
 
 private scalar_primitive ::=
     scalar_variable
@@ -1003,12 +991,11 @@ scalar_array_element ::= scalar_primitive array_index
 scalar_hash_element ::= scalar_primitive hash_index
 anon_array_element ::= parenthesised_expr array_index
 
-private glob ::= <<parseGlobOrElement>>
 private glob_primitive ::=
     glob_variable
     | glob_cast_expr
 
-glob_cast_expr ::= <<parseAmbiguousSigil OPERATOR_MUL SIGIL_GLOB>> cast_target
+glob_cast_expr ::= <<parseAmbiguousSigil 'OPERATOR_MUL, SIGIL_GLOB'>> cast_target
 
 glob_slot ::= glob_primitive hash_index
 
@@ -1023,7 +1010,7 @@ private nested_element_variation ::=
 
 nested_call ::= parse_nested_call
 private parse_nested_call ::= method [method_call_arguments]
-scalar_call ::= scalar [method_call_arguments]
+scalar_call ::= <<parseScalarOrElement>> [method_call_arguments]
 private method_call_arguments ::= LEFT_PAREN [<<parseSimpleCallArguments>>] RIGHT_PAREN
 nested_call_arguments ::= method_call_arguments
 
@@ -1036,11 +1023,11 @@ private callable ::= method | code // being used in parseFunctionCall
 private referencable_expr ::= code | scalar_expr
 
 private code ::=
-    <<parseAmbiguousSigil OPERATOR_BITWISE_AND SIGIL_CODE>> method
+    <<parseAmbiguousSigil 'OPERATOR_BITWISE_AND, SIGIL_CODE'>> method
     | code_variable
     | code_cast_expr
 
-code_cast_expr ::= <<parseAmbiguousSigil OPERATOR_BITWISE_AND SIGIL_CODE>> cast_target
+code_cast_expr ::= <<parseAmbiguousSigil 'OPERATOR_BITWISE_AND, SIGIL_CODE'>> cast_target
 
 ////////////////////////////////END OF CALLABLE ////////////////////////////////////////////////////////////////////////
 
@@ -1051,48 +1038,38 @@ perl_handle_expr ::= HANDLE
 
 //////////////////////////////////// constants /////////////////////////////////////////////////////////////////////////
 
-private scalar_constant ::=
-    number_constant
-    | tag_scalar
-    | string
-
 tag_scalar ::= TAG
 
-number_constant ::=
-    NUMBER
-    | NUMBER_VERSION
-    | NUMBER_SIMPLE
+number_constant ::= NUMBER | NUMBER_VERSION | NUMBER_SIMPLE
 
 private string ::= string_bare | string_sq | string_dq | string_xq | heredoc_opener
 
 string_dq ::=
-  [[PACKAGE_CORE_IDENTIFIER] RESERVED_QQ] string_dq_parsed
-  | <<parseNetstedInterpolatedString QUOTE_DOUBLE>>
+  [ RESERVED_QQ] string_dq_parsed
+  | <<parseNetstedInterpolatedString 'QUOTE_DOUBLE '>>
 
 private string_dq_parsed ::= QUOTE_DOUBLE_OPEN [<<parseInterpolatedStringContent>>] QUOTE_DOUBLE_CLOSE {pin=1}
 
 string_xq ::=
-  [[PACKAGE_CORE_IDENTIFIER] RESERVED_QX] string_xq_parsed
-  | <<parseNetstedInterpolatedString QUOTE_TICK>>
+  [ RESERVED_QX] string_xq_parsed
+  | <<parseNetstedInterpolatedString 'QUOTE_TICK '>>
 
 private string_xq_parsed ::= QUOTE_TICK_OPEN [<<parseInterpolatedStringContent>>] QUOTE_TICK_CLOSE {pin=1}
 
 string_bare ::= <<parseAndWrapStringContent>>+
 
 string_sq ::=
-  [[PACKAGE_CORE_IDENTIFIER] RESERVED_Q] <<parseSQString>>
+  [ RESERVED_Q] <<parseSQString>>
   | <<parseNestedSQString>> // nested sq string
 
 private string_sq_parsed ::= QUOTE_SINGLE_OPEN <<parseAndWrapStringContent>>* QUOTE_SINGLE_CLOSE {pin=1}
 private string_content_qq ::= string_content_element +
-private string_content_element ::=
-  <<parseInterpolatedConstructs>>
-  | <<convertToStringContent>>
+private string_content_element ::= <<parseInterpolatedConstructs>>  | <<convertToStringContent>>
 
 // these constructs are for regular strings
 private interpolated_constructs ::=
-  scalar
-  | array
+  <<parseScalarOrElement>>
+  | <<parseArrayOrSlice>>
   | array_index_variable
 
 private use_vars_interpolated_constructs ::=
@@ -1104,7 +1081,7 @@ private use_vars_interpolated_constructs ::=
 
 heredoc_opener ::= OPERATOR_HEREDOC ( OPERATOR_REFERENCE string_bare | <<parseEmptyString>> | string ){pin=1}
 
-string_list ::= [[PACKAGE_CORE_IDENTIFIER] RESERVED_QW] <<parseSQString>>
+string_list ::=  RESERVED_QW <<parseSQString>>
 
 ///////////////////////////////////// variables ////////////////////////////////////////////////////////////////////////
 private lexical_variable ::= scalar_variable | array_variable | hash_variable
@@ -1112,12 +1089,12 @@ private lexical_variable ::= scalar_variable | array_variable | hash_variable
 array_index_variable ::= SIGIL_SCALAR_INDEX variable_body
 scalar_variable ::= SIGIL_SCALAR variable_body
 array_variable ::= SIGIL_ARRAY variable_body
-hash_variable ::= <<parseAmbiguousSigil OPERATOR_MOD SIGIL_HASH>> variable_body
+hash_variable ::= <<parseAmbiguousSigil 'OPERATOR_MOD, SIGIL_HASH'>> variable_body
 
 //fixme probably this should not be here
-code_variable ::= <<parseAmbiguousSigil OPERATOR_BITWISE_AND SIGIL_CODE>> variable_body
+code_variable ::= <<parseAmbiguousSigil 'OPERATOR_BITWISE_AND, SIGIL_CODE'>> variable_body
 
-glob_variable ::= <<parseAmbiguousSigil OPERATOR_MUL SIGIL_GLOB>> variable_body
+glob_variable ::= <<parseAmbiguousSigil 'OPERATOR_MUL, SIGIL_GLOB'>> variable_body
 
 private variable_body ::= <<parseVariableName>>
 
@@ -1129,8 +1106,8 @@ private namespace_canonical ::= <<convertPackageIdentifier>>
 
 /********************************************** Extensions for Method::Signatures *************************************/
 // we can make this smareter and use keywords from settings or import opitions; We can't pin here because MooseX method works othewise
-method_definition ::= <<checkAndConvertToken RESERVED_SUB RESERVED_METHOD>> sub_definition_name [method_signature] [sub_attributes] block
-func_definition ::= <<checkAndConvertToken RESERVED_SUB RESERVED_FUNC>> sub_definition_name [func_signature] [sub_attributes] block
+method_definition ::= <<checkAndConvertToken 'RESERVED_SUB, RESERVED_METHOD'>> sub_definition_name [method_signature] [sub_attributes] block
+func_definition ::= <<checkAndConvertToken 'RESERVED_SUB, RESERVED_FUNC'>> sub_definition_name [func_signature] [sub_attributes] block
 
 // not sure that we need a wrapper for signatures
 private method_signature ::= LEFT_PAREN method_signature_content RIGHT_PAREN {pin=1}

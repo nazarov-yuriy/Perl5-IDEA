@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Created by hurricup on 17.02.2016.
  */
-public class PerlScopeUtil
+public class PerlResolveUtil
 {
 	public static boolean treeWalkUp(@Nullable PsiElement place, @NotNull PsiScopeProcessor processor)
 	{
@@ -48,21 +48,7 @@ public class PerlScopeUtil
 			}
 			lastParent = run;
 
-			if (run instanceof PsiFile)
-			{
-				if (run instanceof PerlFileImpl)
-				{
-					run = ((PerlFileImpl) ((PerlFileImpl) run).getOriginalFile()).getContext();
-				}
-				else
-				{
-					run = null;
-				}
-			}
-			else
-			{
-				run = run.getParent();
-			}
+			run = run.getContext();
 		}
 		return true;
 	}
@@ -110,8 +96,12 @@ public class PerlScopeUtil
 	@Nullable
 	public static PerlVariableDeclarationWrapper getLexicalDeclaration(PerlVariable variable)
 	{
+		if (variable.getNamespaceElement() != null)
+		{
+			return null;
+		}
 		PerlVariableDeclarationSearcher variableProcessor = new PerlVariableDeclarationSearcher(variable);
-		PerlScopeUtil.treeWalkUp(variable, variableProcessor);
+		PerlResolveUtil.treeWalkUp(variable, variableProcessor);
 		return variableProcessor.getResult();
 	}
 

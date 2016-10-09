@@ -35,7 +35,6 @@ import com.perl5.lang.perl.psi.*;
 import com.perl5.lang.perl.psi.impl.PerlCompositeElementImpl;
 import com.perl5.lang.perl.psi.properties.PerlLexicalScope;
 import com.perl5.lang.perl.psi.utils.PerlPsiUtil;
-import com.perl5.lang.perl.psi.utils.PerlScopeUtil;
 import com.perl5.lang.perl.psi.utils.PerlVariableType;
 import com.perl5.lang.perl.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -409,7 +408,7 @@ public abstract class PerlVariableImplMixin extends PerlCompositeElementImpl imp
 		return packageName + PerlPackageUtil.PACKAGE_SEPARATOR + getName();
 	}
 
-	// fixme this need to be moved to PerlResolveUtil or Resolver
+	// fixme this need to be improved very much
 	@Override
 	public PerlVariableDeclarationWrapper getLexicalDeclaration()
 	{
@@ -418,7 +417,37 @@ public abstract class PerlVariableImplMixin extends PerlCompositeElementImpl imp
 			return null;
 		}
 
-		return PerlScopeUtil.getLexicalDeclaration(this);
+		PerlVariableNameElement variableNameElement = getVariableNameElement();
+		if (variableNameElement == null)
+		{
+			return null;
+		}
+
+		for (PsiReference psiReference : variableNameElement.getReferences())
+		{
+			if (psiReference instanceof PsiPolyVariantReference)
+			{
+				for (ResolveResult resolveResult : ((PsiPolyVariantReference) psiReference).multiResolve(false))
+				{
+					PsiElement element = resolveResult.getElement();
+					if (element != null)
+					{
+						return (PerlVariableDeclarationWrapper) element;
+					}
+				}
+
+			}
+			else
+			{
+				PsiElement target = psiReference.resolve();
+				if (target != null)
+				{
+					return (PerlVariableDeclarationWrapper) target;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	// fixme this need to be moved to PerlResolveUtil or Resolver
@@ -493,7 +522,10 @@ public abstract class PerlVariableImplMixin extends PerlCompositeElementImpl imp
 	@Override
 	public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place)
 	{
-		processor.execute(this, state);
+		if (!processor.execute(this, state))
+		{
+			return false;
+		}
 		return super.processDeclarations(processor, state, lastParent, place);
 	}
 }

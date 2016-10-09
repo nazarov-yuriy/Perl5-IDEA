@@ -14,23 +14,11 @@
  * limitations under the License.
  */
 
-package parserHeavy;
+package categories;
 
 /**
- * Created by hurricup on 28.02.2016.
+ * Created by hurricup on 08.10.2016.
  */
-public class PerlSourcesParserTestBenchmark extends PerlSourcesParserTestAbstract
+public interface Performance
 {
-	private static final String GROUP = "benchmark";
-
-	@Override
-	protected String getTestsGroup()
-	{
-		return GROUP;
-	}
-
-	public void testrt26188_speed_up_keys_on_empty_hash()
-	{
-		doTest("rt26188-speed-up-keys-on-empty-hash");
-	}
 }

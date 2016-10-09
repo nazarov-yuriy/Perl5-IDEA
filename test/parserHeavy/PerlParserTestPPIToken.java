@@ -19,14 +19,20 @@ package parserHeavy;
 /**
  * Created by hurricup on 28.02.2016.
  */
-public class PerlParserTestPPIToken extends PerlParserTestPPIBase
+
+import categories.Heavy;
+import org.junit.experimental.categories.Category;
+import parser.PerlParserTestBase;
+
+@Category(Heavy.class)
+public class PerlParserTestPPIToken extends PerlParserTestBase
 {
-	private static final String myGroup = "07_token";
+	public static final String DATA_PATH = "testDataHeavy/parser/ppi/07_token";
 
 	@Override
-	protected String getTestsGroup()
+	protected String getTestDataPath()
 	{
-		return myGroup;
+		return DATA_PATH;
 	}
 
 	public void testExp()
@@ -34,12 +40,12 @@ public class PerlParserTestPPIToken extends PerlParserTestPPIBase
 		doTest("exp");
 	}
 
-	public void testRangeOperator()
+	public void testrange_operator()
 	{
 		doTest("range_operator");
 	}
 
-	public void testSmartMatch()
+	public void testsmart_match()
 	{
 		doTest("smart_match");
 	}

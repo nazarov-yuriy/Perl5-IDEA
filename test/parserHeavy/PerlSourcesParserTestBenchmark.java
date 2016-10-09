@@ -16,14 +16,18 @@
 
 package parserHeavy;
 
-import parser.PerlParserSubtestBase;
-
 /**
  * Created by hurricup on 28.02.2016.
  */
-public abstract class PerlSourcesParserTestAbstract extends PerlParserSubtestBase
+
+import categories.Heavy;
+import org.junit.experimental.categories.Category;
+import parser.PerlParserTestBase;
+
+@Category(Heavy.class)
+public class PerlSourcesParserTestBenchmark extends PerlParserTestBase
 {
-	public static final String DATA_PATH = "testDataHeavy/parser/perl5";
+	public static final String DATA_PATH = "testDataHeavy/parser/perl5/benchmark";
 
 	@Override
 	protected String getTestDataPath()
@@ -31,4 +35,8 @@ public abstract class PerlSourcesParserTestAbstract extends PerlParserSubtestBas
 		return DATA_PATH;
 	}
 
+	public void testrt26188_speed_up_keys_on_empty_hash()
+	{
+		doTest("rt26188-speed-up-keys-on-empty-hash");
+	}
 }

@@ -38,20 +38,32 @@
       <li>External annotations mechanism. Allows you to annotate foreign modules on different levels. More information in our <a href="https://github.com/Camelcade/Perl5-IDEA/wiki/External-Annotations">wiki</a>.</li>
       <li><code>#@type</code> annotation for variables. More information in our <a href="https://github.com/Camelcade/Perl5-IDEA/wiki/Annotations#type">wiki</a>.</li>
       </ul>
+    <p>Plugin moves to the IDEA-like versioning to make things more consistent. Also, future updates will be released for current version of JetBrains products only. Critical things
+     may be backported to previous version, but current - 2.2 version is pretty stable for those, who don't want or need to upgrade.</p>
+     <p>Changes:
+     <ul>
+      <li>IDEA 2016.3 compatibility</li>
+      <li>Multiple internal tools upgrades</li>
+      <li>Moved to Java 8</li>
+     </ul>
      </p>
+
      <p>Fixes:
       <ul>
       <li>Library settings now being stored properly for multi-module projects, thanks to <a href="https://github.com/Camelcade/Perl5-IDEA/issues/1332">mciprijanovic</a>.</li>
       <li>Possible NPE in unused subs inspection</li>
       <li>Resolving problem if spaces or comments around <code>-></code> operator.</li>
       <li>Annotations for Mojolicious helpers</li>
+      <li>Possible NPE on running the script if settings file been corrupted</li>
+      <li>Optimized parsing of multiple namespaces</li>
+      <li>Optimized variables resolving, made it 10 times faster</li>
       </ul>
      </p>
     ]]>
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description  -->
-    <idea-version since-build="139"/>
+    <idea-version since-build="162" until-build="163.*"/>
 
     <!-- please  see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products  -->

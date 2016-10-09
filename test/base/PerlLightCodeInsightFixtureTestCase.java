@@ -72,7 +72,6 @@ public abstract class PerlLightCodeInsightFixtureTestCase extends LightCodeInsig
 	@Override
 	protected void setUp() throws Exception
 	{
-		VfsRootAccess.SHOULD_PERFORM_ACCESS_CHECK = false; // TODO: a workaround for v15
 		super.setUp();
 		registerApplicationService(PerlSharedSettings.class, new PerlSharedSettings(myFixture.getProject()));
 	}
@@ -91,6 +90,29 @@ public abstract class PerlLightCodeInsightFixtureTestCase extends LightCodeInsig
 				container.unregisterComponent(aClass.getName());
 			}
 		});
+	}
+
+	public void initWithPerlTidy()
+	{
+		initWithPerlTidy("perlTidy");
+	}
+
+	public void initWithPerlTidy(@NotNull String targetName)
+	{
+		try
+		{
+			initWithFileContent(targetName, getFileExtension(), FileUtil.loadFile(new File("testData", "perlTidy.code"), CharsetToolkit.UTF8, true).trim());
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+
+	public void initWithFileSmart()
+	{
+		initWithFileSmart(getTestName(true));
 	}
 
 	public void initWithFileSmart(String filename)
@@ -155,7 +177,12 @@ public abstract class PerlLightCodeInsightFixtureTestCase extends LightCodeInsig
 
 	public void initWithFile(String filename, String extension) throws IOException
 	{
-		initWithFileContent(filename, extension, FileUtil.loadFile(new File(getTestDataPath(), filename + ".code"), CharsetToolkit.UTF8, true).trim());
+		initWithFile(filename, extension, filename + ".code");
+	}
+
+	public void initWithFile(String targetFileName, String targetFileExtension, String sourceFileNameWithExtension) throws IOException
+	{
+		initWithFileContent(targetFileName, targetFileExtension, FileUtil.loadFile(new File(getTestDataPath(), sourceFileNameWithExtension), CharsetToolkit.UTF8, true).trim());
 	}
 
 	public void initWithFileContent(String filename, String extension, String content) throws IOException

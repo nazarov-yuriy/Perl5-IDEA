@@ -35,6 +35,8 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
@@ -757,7 +759,7 @@ public class PerlPackageUtil implements PerlElementTypes, PerlBuiltInNamespaces
 
 		for (PerlNamespaceDefinition parentNamespace : childClass.getParentNamespaceDefinitions())
 		{
-			for (PsiElement subDefinitionBase : PerlPsiUtil.collectNamespaceMembers(parentNamespace, PerlSubBaseStub.class, PerlSubBase.class))
+			for (PsiElement subDefinitionBase : collectNamespaceSubs(parentNamespace))
 			{
 				String subName = ((PerlSubBase) subDefinitionBase).getSubName();
 				if (subDefinitionBase.isValid() &&
@@ -778,6 +780,19 @@ public class PerlPackageUtil implements PerlElementTypes, PerlBuiltInNamespaces
 		}
 	}
 
+	public static List<PsiElement> collectNamespaceSubs(@NotNull final PsiElement namespace)
+	{
+		return CachedValuesManager.getCachedValue(namespace, new CachedValueProvider<List<PsiElement>>()
+		{
+			@Nullable
+			@Override
+			public Result<List<PsiElement>> compute()
+			{
+				return Result.create(PerlPsiUtil.collectNamespaceMembers(namespace, PerlSubBaseStub.class, PerlSubBase.class), namespace);
+			}
+		});
+	}
+
 	public static void processChildNamespacesSubs(@NotNull PerlNamespaceDefinition namespaceDefinition,
 												  @Nullable Set<PerlNamespaceDefinition> recursionSet,
 												  Processor<PerlSubBase> processor)
@@ -795,7 +810,7 @@ public class PerlPackageUtil implements PerlElementTypes, PerlBuiltInNamespaces
 			{
 				boolean processSubclasses = true;
 
-				for (PsiElement subBase : PerlPsiUtil.collectNamespaceMembers(childNamespace, PerlSubBaseStub.class, PerlSubBase.class))
+				for (PsiElement subBase : collectNamespaceSubs(childNamespace))
 				{
 					processSubclasses = processor.process((PerlSubBase) subBase);
 				}

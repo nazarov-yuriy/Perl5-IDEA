@@ -20,6 +20,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.perl5.lang.perl.extensions.packageprocessor.PerlPackageProcessor;
 import com.perl5.lang.perl.psi.properties.PerlNamespaceElementContainer;
 import com.perl5.lang.perl.psi.stubs.imports.PerlUseStatementStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +43,7 @@ public interface PerlUseStatement extends StubBasedPsiElement<PerlUseStatementSt
 
 	PerlVersionElement getVersionElement();
 
+	@NotNull
 	PerlPackageProcessor getPackageProcessor();
 
 	@Nullable

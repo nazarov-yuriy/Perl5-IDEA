@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.perl5.lang.perl.psi.utils.PerlResolveUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.perl5.lang.perl.psi.references.PerlElementWithCachingReference;
@@ -61,7 +62,7 @@ public class PerlStubBasedPsiElementBase<T extends StubElement> extends StubBase
 	public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place)
 	{
 //		System.err.println(this);
-		return PerlScopeUtil.processChildren(
+		return PerlResolveUtil.processChildren(
 				this,
 				processor,
 				state,

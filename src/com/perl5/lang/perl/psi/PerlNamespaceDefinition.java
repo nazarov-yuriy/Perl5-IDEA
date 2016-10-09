@@ -40,7 +40,8 @@ public interface PerlNamespaceDefinition extends
 		PerlNamedElement,
 		PerlNamespaceContainer,
 		PerlDeprecatable,
-		PerlElementPatterns
+		PerlElementPatterns,
+		PerlCompositeElement
 {
 	/**
 	 * Retuns block or namespace content with statements

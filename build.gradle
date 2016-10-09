@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories {
+        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+    }
+}
+
 plugins {
-    id 'org.jetbrains.intellij' version '0.0.40'
+    id "org.jetbrains.intellij" version "0.1.10"
 }
 
 version = "$version$buildNumber"
 
 apply plugin: 'java'
 sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
+targetCompatibility = javaTargetVersion
 tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
 
 sourceSets {
@@ -31,11 +37,10 @@ sourceSets {
         resources.srcDir 'resources'
     }
     test {
+        java.srcDir 'test'
         if (project.hasProperty("heavy")) {
-            java.srcDirs 'test', 'testHeavy'
             resources.srcDirs 'testData', 'testDataHeavy'
         } else {
-            java.srcDir 'test'
             resources.srcDir 'testData'
         }
     }
@@ -63,6 +68,18 @@ test {
     doFirst{
         systemProperty("idea.plugins.path", project.rootDir.canonicalPath + "/.test-plugins")
     }
+    useJUnit {
+        if (project.hasProperty("perf")) {
+            includeCategories 'categories.Performance'
+        } else {
+            excludeCategories 'categories.Performance'
+        }
+        if (project.hasProperty("heavy")) {
+            includeCategories 'categories.Heavy'
+        } else {
+            excludeCategories 'categories.Heavy'
+        }
+    }
     testLogging {
         exceptionFormat = 'full'
         showStandardStreams = true
@@ -74,14 +91,13 @@ repositories {
 }
 
 configurations {
-    gen
+    lexer
+    parser
 }
 
-
 dependencies {
-    gen files('lib/lexer/jflex-patched.jar')
-    gen files('lib/gk/grammar-kit.jar')
-    gen files('lib/gk/light-psi-all.jar')
+    lexer files('lib/jflex-1.7.0-SNAPSHOT.jar')
+    parser files('lib/grammar-kit.jar')
 }
 
 project.afterEvaluate {
@@ -117,7 +133,6 @@ idea {
 
 def getJflexArguments(srcFlex, targetDir) {
     return [
-            "-sliceandcharat",
             "--skel", "$lexer_skeleton",
             "-d", targetDir,
             srcFlex
@@ -136,7 +151,7 @@ task generatePerl5Parser(type: JavaExec) {
     outputs.file file(dstRoot + '/com/perl5/lang/perl/parser/PerlParserGenerated.java')
     outputs.dir fileTree(dir: dstRoot + '/com/perl5/lang/perl/psi', include: '**/*.java')
 
-    classpath configurations.gen
+    classpath configurations.compile + configurations.parser
 }
 
 task generatePodParser(type: JavaExec) {
@@ -151,7 +166,7 @@ task generatePodParser(type: JavaExec) {
     outputs.file file(dstRoot + '/com/perl5/lang/pod/parser/PodParserGenerated.java')
     outputs.dir fileTree(dir: dstRoot + '/com/perl5/lang/pod/psi', include: '**/*.java')
 
-    classpath configurations.gen
+    classpath configurations.compile + configurations.parser
 }
 
 task generateTT2Parser(type: JavaExec) {
@@ -166,7 +181,7 @@ task generateTT2Parser(type: JavaExec) {
     outputs.file file(dstRoot + '/com/perl5/lang/tt2/parser/TemplateToolkitParserGenerated.java')
     outputs.dir fileTree(dir: dstRoot + '/com/perl5/lang/tt2/psi', include: '**/*.java')
 
-    classpath configurations.gen
+    classpath configurations.compile + configurations.parser
 }
 
 // fxime dry this
@@ -174,60 +189,62 @@ task generatePerlLexer(type: JavaExec) {
     dependsOn generatePerl5Parser
     ext.src = "grammar/Perl.flex"
     ext.dst = "gen/com/perl5/lang/perl/lexer/"
-    main = "JFlex.Main"
+    main = "jflex.Main"
     args = getJflexArguments(src, dst)
     inputs.file file(src)
     inputs.file file("$lexer_skeleton")
     outputs.file file(dst+ "PerlLexerGenerated.java")
-    classpath configurations.gen
+
+    classpath configurations.lexer
 }
 
 task generatePerlAnnotationsLexer(type: JavaExec) {
     dependsOn generatePerlLexer
     ext.src = "grammar/PerlAnnotations.flex"
     ext.dst = "gen/com/perl5/lang/perl/lexer/"
-    main = "JFlex.Main"
+    main = "jflex.Main"
     args = getJflexArguments(src, dst)
     inputs.file file(src)
     inputs.file file("$lexer_skeleton")
     outputs.file file(dst + "PerlAnnotationsLexerGenerated.java")
-    classpath configurations.gen
+
+    classpath configurations.lexer
 }
 
 task generatePodLexer(type: JavaExec) {
     dependsOn generatePodParser
     ext.src = "grammar/Pod.flex"
     ext.dst = "gen/com/perl5/lang/pod/lexer/"
-    main = "JFlex.Main"
+    main = "jflex.Main"
     args = getJflexArguments(src, dst)
     inputs.file file(src)
     inputs.file file("$lexer_skeleton")
     outputs.file file(dst + "PodLexerGenerated.java")
-    classpath configurations.gen
+    classpath configurations.lexer
 }
 
 task generateTT2Lexer(type: JavaExec) {
     dependsOn generateTT2Parser
     ext.src = "grammar/TemplateToolkit.flex"
     ext.dst = "gen/com/perl5/lang/tt2/lexer/"
-    main = "JFlex.Main"
+    main = "jflex.Main"
     args = getJflexArguments(src, dst)
     inputs.file file(src)
     inputs.file file("$lexer_skeleton")
     outputs.file file(dst + "TemplateToolkitLexerGenerated.java")
-    classpath configurations.gen
+    classpath configurations.lexer
 }
 
 task generatePerlStringLexer(type: JavaExec) {
     dependsOn generatePerl5Parser
     ext.src = "grammar/PerlString.flex"
     ext.dst = "gen/com/perl5/lang/perl/lexer/"
-    main = "JFlex.Main"
+    main = "jflex.Main"
     args = getJflexArguments(src, dst)
     inputs.file file(src)
     inputs.file file("$lexer_skeleton")
     outputs.file file(dst + "PerlStringLexerGenerated.java")
-    classpath configurations.gen
+    classpath configurations.lexer
 }
 
 task generateLexers{

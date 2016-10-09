@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package parser;
+package categories;
 
 /**
- * Created by hurricup on 28.02.2016.
+ * Created by hurricup on 08.10.2016.
  */
-public abstract class PerlParserSubtestBase extends PerlParserTestBase
+public interface Heavy
 {
-	protected abstract String getTestsGroup();
-
-	@Override
-	public void doTest(String filename, boolean checkErrors)
-	{
-		super.doTest(getTestsGroup() + "/" + filename, checkErrors);
-	}
 }
