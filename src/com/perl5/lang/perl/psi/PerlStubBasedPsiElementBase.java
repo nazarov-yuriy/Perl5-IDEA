@@ -25,11 +25,10 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.perl5.lang.perl.psi.utils.PerlResolveUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.perl5.lang.perl.psi.references.PerlElementWithCachingReference;
-import com.perl5.lang.perl.psi.utils.PerlScopeUtil;
+import com.perl5.lang.perl.psi.utils.PerlResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
