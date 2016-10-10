@@ -69,6 +69,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PerlPackageUtil implements PerlElementTypes, PerlBuiltInNamespaces
 {
+	public static final String PACKAGE_SEPARATOR = "::";
+	public static final String PACKAGE_DEREFERENCE = "->";
+	public static final char PACKAGE_SEPARATOR_LEGACY = '\'';
+	public static final Pattern PACKAGE_SEPARATOR_RE = Pattern.compile(PACKAGE_SEPARATOR + "|" + PACKAGE_SEPARATOR_LEGACY);
+	public static final Pattern PACKAGE_SEPARATOR_TAIL_RE = Pattern.compile("(" + PACKAGE_SEPARATOR + "|" + PACKAGE_SEPARATOR_LEGACY + ")$");
+
 	// perl using idea class roots plus some inferred classroots not presenting in order entries
 	public static final Key<List<VirtualFile>> PERL_CLASS_ROOTS = Key.create("perl.class.roots");
 	public static final Set<String> BUILT_IN_ALL = new THashSet<String>();
