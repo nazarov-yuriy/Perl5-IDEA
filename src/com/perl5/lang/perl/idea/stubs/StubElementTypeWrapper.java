@@ -26,54 +26,47 @@ import java.io.IOException;
 /**
  * Class for custom serialization of light elements
  */
-public class StubElementTypeWrapper
-{
-	private static final ConcurrentIntObjectMap<StubElementTypeWrapper> myIdMap = ContainerUtil.createConcurrentIntObjectMap();
-	private final int myId;
-	@NotNull
-	private final IStubElementType myRealElementType;
+public class StubElementTypeWrapper {
+  private static final ConcurrentIntObjectMap<StubElementTypeWrapper> myIdMap = ContainerUtil.createConcurrentIntObjectMap();
+  private final int myId;
+  @NotNull
+  private final IStubElementType myRealElementType;
 
-	private StubElementTypeWrapper(int id, @NotNull IStubElementType realElementType)
-	{
-		myId = id;
-		myRealElementType = realElementType;
-	}
+  private StubElementTypeWrapper(int id, @NotNull IStubElementType realElementType) {
+    myId = id;
+    myRealElementType = realElementType;
+  }
 
-	public static synchronized StubElementTypeWrapper create(int id, @NotNull IStubElementType realElementType)
-	{
-		assert !myIdMap.containsKey(id) : "Duplicate entry: " + id + " already contains " + myIdMap.get(id);
+  @NotNull
+  public IStubElementType getRealElementType() {
+    return myRealElementType;
+  }
 
-		StubElementTypeWrapper newLightElement = new StubElementTypeWrapper(id, realElementType);
-		myIdMap.put(id, newLightElement);
-		return newLightElement;
-	}
+  public void serialize(@NotNull StubElementWrapper stubElementWrapper, @NotNull StubOutputStream dataStream) throws IOException {
+    dataStream.writeInt(myId);
+    //noinspection unchecked
+    getRealElementType().serialize(stubElementWrapper.getRealStub(), dataStream);
+  }
 
-	private static synchronized StubElementTypeWrapper get(int id)
-	{
-		assert myIdMap.containsKey(id) : "There is no registered wrapper with id " + id;
-		return myIdMap.get(id);
-	}
+  public static synchronized StubElementTypeWrapper create(int id, @NotNull IStubElementType realElementType) {
+    assert !myIdMap.containsKey(id) : "Duplicate entry: " + id + " already contains " + myIdMap.get(id);
 
-	public static StubElementWrapper deserialize(@NotNull StubInputStream dataStream) throws IOException
-	{
-		int serializerId = dataStream.readInt();
-		StubElementTypeWrapper stubElementTypeWrapper = get(serializerId);
-		@SuppressWarnings("unchecked")
-		Stub realStub = stubElementTypeWrapper.getRealElementType().deserialize(dataStream, null);
-		assert realStub instanceof StubElement : realStub + " is not a StubElement";
-		return new StubElementWrapper((StubElement) realStub, stubElementTypeWrapper);
-	}
+    StubElementTypeWrapper newLightElement = new StubElementTypeWrapper(id, realElementType);
+    myIdMap.put(id, newLightElement);
+    return newLightElement;
+  }
 
-	@NotNull
-	public IStubElementType getRealElementType()
-	{
-		return myRealElementType;
-	}
+  private static synchronized StubElementTypeWrapper get(int id) {
+    assert myIdMap.containsKey(id) : "There is no registered wrapper with id " + id;
+    return myIdMap.get(id);
+  }
 
-	public void serialize(@NotNull StubElementWrapper stubElementWrapper, @NotNull StubOutputStream dataStream) throws IOException
-	{
-		dataStream.writeInt(myId);
-		//noinspection unchecked
-		getRealElementType().serialize(stubElementWrapper.getRealStub(), dataStream);
-	}
+  public static StubElementWrapper deserialize(@NotNull StubInputStream dataStream) throws IOException {
+    int serializerId = dataStream.readInt();
+    StubElementTypeWrapper stubElementTypeWrapper = get(serializerId);
+    @SuppressWarnings("unchecked")
+    Stub realStub = stubElementTypeWrapper.getRealElementType().deserialize(dataStream, null);
+    assert realStub instanceof StubElement : realStub + " is not a StubElement";
+    return new StubElementWrapper((StubElement)realStub, stubElementTypeWrapper);
+  }
 }

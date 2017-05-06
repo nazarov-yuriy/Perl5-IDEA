@@ -13,23 +13,20 @@ import java.util.Map;
  *
  * @param <Psi>
  */
-public class PerlPolyNamedStub<Psi extends PerlPolyNamedStubBasedElement> extends StubBase<Psi>
-{
-	@NotNull
-	private final Map<String, StubElementWrapper> myStubsMap;
+public class PerlPolyNamedStub<Psi extends PerlPolyNamedStubBasedElement> extends StubBase<Psi> {
+  @NotNull
+  private final Map<String, StubElementWrapper> myStubsMap;
 
-	public PerlPolyNamedStub(StubElement parent, IStubElementType elementType, @NotNull Map<String, StubElementWrapper> stubsMap)
-	{
-		super(parent, elementType);
-		myStubsMap = stubsMap;
-	}
+  public PerlPolyNamedStub(StubElement parent, IStubElementType elementType, @NotNull Map<String, StubElementWrapper> stubsMap) {
+    super(parent, elementType);
+    myStubsMap = stubsMap;
+  }
 
-	/**
-	 * Returns list of names for this Stub element
-	 */
-	@NotNull
-	public Map<String, StubElementWrapper> getStubsMap()
-	{
-		return myStubsMap;
-	}
+  /**
+   * Returns list of names for this Stub element
+   */
+  @NotNull
+  public Map<String, StubElementWrapper> getStubsMap() {
+    return myStubsMap;
+  }
 }

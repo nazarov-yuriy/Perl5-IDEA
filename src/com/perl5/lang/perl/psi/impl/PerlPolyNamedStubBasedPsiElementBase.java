@@ -16,6 +16,5 @@
 
 package com.perl5.lang.perl.psi.impl;
 
-public abstract class PerlPolyNamedStubBasedPsiElementBase
-{
+public abstract class PerlPolyNamedStubBasedPsiElementBase {
 }

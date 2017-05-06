@@ -19,6 +19,5 @@ package com.perl5.lang.perl.psi;
 import com.intellij.psi.StubBasedPsiElement;
 import com.perl5.lang.perl.idea.stubs.PerlPolyNamedStub;
 
-public interface PerlPolyNamedStubBasedElement extends PerlPolyNamedElement, StubBasedPsiElement<PerlPolyNamedStub>
-{
+public interface PerlPolyNamedStubBasedElement extends PerlPolyNamedElement, StubBasedPsiElement<PerlPolyNamedStub> {
 }

@@ -25,39 +25,33 @@ import java.io.IOException;
 /**
  * Wrapper for one of the stub elements created by real IStubElementType deserialize methods
  */
-public class StubElementWrapper
-{
-	@NotNull
-	private final StubElement myRealStub;
-	@NotNull
-	private final StubElementTypeWrapper myStubElementTypeWrapper;
+public class StubElementWrapper {
+  @NotNull
+  private final StubElement myRealStub;
+  @NotNull
+  private final StubElementTypeWrapper myStubElementTypeWrapper;
 
-	public StubElementWrapper(@NotNull StubElement realStub, @NotNull StubElementTypeWrapper stubElementTypeWrapper)
-	{
-		myRealStub = realStub;
-		myStubElementTypeWrapper = stubElementTypeWrapper;
-	}
+  public StubElementWrapper(@NotNull StubElement realStub, @NotNull StubElementTypeWrapper stubElementTypeWrapper) {
+    myRealStub = realStub;
+    myStubElementTypeWrapper = stubElementTypeWrapper;
+  }
 
-	@NotNull
-	public StubElement getRealStub()
-	{
-		return myRealStub;
-	}
+  @NotNull
+  public StubElement getRealStub() {
+    return myRealStub;
+  }
 
-	@NotNull
-	public StubElementTypeWrapper getStubElementTypeWrapper()
-	{
-		return myStubElementTypeWrapper;
-	}
+  @NotNull
+  public StubElementTypeWrapper getStubElementTypeWrapper() {
+    return myStubElementTypeWrapper;
+  }
 
-	public void serialize(@NotNull StubOutputStream dataStream) throws IOException
-	{
-		getStubElementTypeWrapper().serialize(this, dataStream);
-	}
+  public void serialize(@NotNull StubOutputStream dataStream) throws IOException {
+    getStubElementTypeWrapper().serialize(this, dataStream);
+  }
 
-	@NotNull
-	public String getMapName()
-	{
-		getStubElementTypeWrapper().get
-	}
+  @NotNull
+  public String getMapName() {
+    getStubElementTypeWrapper().get
+  }
 }

@@ -9,60 +9,51 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PerlDelegatingStubBasedLightNamedElement<Delegate extends PerlPolyNamedStubBasedElement, Stub extends StubElement>
-		extends PerlDelegatingLightNamedElement<Delegate>
-{
-	@NotNull
-	private final StubElementTypeWrapper myStubElementTypeWrapper;
+  extends PerlDelegatingLightNamedElement<Delegate> {
+  @NotNull
+  private final StubElementTypeWrapper myStubElementTypeWrapper;
 
-	public PerlDelegatingStubBasedLightNamedElement(
-			@NotNull Delegate delegate,
-			@NotNull String name,
-			@NotNull StubElementTypeWrapper stubElementTypeWrapper)
-	{
-		super(delegate, name);
-		myStubElementTypeWrapper = stubElementTypeWrapper;
-	}
+  public PerlDelegatingStubBasedLightNamedElement(
+    @NotNull Delegate delegate,
+    @NotNull String name,
+    @NotNull StubElementTypeWrapper stubElementTypeWrapper) {
+    super(delegate, name);
+    myStubElementTypeWrapper = stubElementTypeWrapper;
+  }
 
-	@Nullable
-	public Stub getStub()
-	{
-		return getRealStub(getDelegate().getStub());
-	}
+  @Nullable
+  public Stub getStub() {
+    return getRealStub(getDelegate().getStub());
+  }
 
-	private Stub getRealStub(StubElement delegateStub)
-	{
-		if (delegateStub == null)
-		{
-			return null;
-		}
+  private Stub getRealStub(StubElement delegateStub) {
+    if (delegateStub == null) {
+      return null;
+    }
 
-		assert delegateStub instanceof PerlPolyNamedStub;
+    assert delegateStub instanceof PerlPolyNamedStub;
 
-		//noinspection unchecked
-		Object stubWrapper = ((PerlPolyNamedStub) delegateStub).getStubsMap().get(getName());
-		if (stubWrapper == null)
-		{
-			return null;
-		}
-		assert stubWrapper instanceof StubElementWrapper;
-		//noinspection unchecked
-		return (Stub) ((StubElementWrapper) stubWrapper).getRealStub();
-	}
+    //noinspection unchecked
+    Object stubWrapper = ((PerlPolyNamedStub)delegateStub).getStubsMap().get(getName());
+    if (stubWrapper == null) {
+      return null;
+    }
+    assert stubWrapper instanceof StubElementWrapper;
+    //noinspection unchecked
+    return (Stub)((StubElementWrapper)stubWrapper).getRealStub();
+  }
 
-	@Nullable
-	public Stub getGreenStub()
-	{
-		Delegate delegate = getDelegate();
-		if (!(delegate instanceof StubBasedPsiElementBase))
-		{
-			return null;
-		}
-		return getRealStub(((StubBasedPsiElementBase) delegate).getGreenStub());
-	}
+  @Nullable
+  public Stub getGreenStub() {
+    Delegate delegate = getDelegate();
+    if (!(delegate instanceof StubBasedPsiElementBase)) {
+      return null;
+    }
+    return getRealStub(((StubBasedPsiElementBase)delegate).getGreenStub());
+  }
 
-	@NotNull
-	public StubElementTypeWrapper getStubElementTypeWrapper()
-	{
-		return myStubElementTypeWrapper;
-	}
+  @NotNull
+  public StubElementTypeWrapper getStubElementTypeWrapper() {
+    return myStubElementTypeWrapper;
+  }
 }

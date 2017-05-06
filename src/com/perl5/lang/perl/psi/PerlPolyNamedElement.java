@@ -31,103 +31,92 @@ import java.util.Map;
 /**
  * Interface represents poly-named declaration, when one expression declares multiple entities with different names
  */
-public interface PerlPolyNamedElement<T extends PerlDelegatingLightNamedElement> extends PsiElement
-{
-	/**
-	 * @return collecting map of names to identifiers
-	 */
-	@NotNull
-	Map<String, PsiElement> collectNameIdentifiersMap();
+public interface PerlPolyNamedElement<T extends PerlDelegatingLightNamedElement> extends PsiElement {
+  /**
+   * @return collecting map of names to identifiers
+   */
+  @NotNull
+  Map<String, PsiElement> collectNameIdentifiersMap();
 
-	/**
-	 * @return Map of names to name identifiers, cached
-	 */
-	@NotNull
-	default Map<String, PsiElement> getNameIdentifiersMap()
-	{
-		return CachedValuesManager.getCachedValue(this, () ->
-				CachedValueProvider.Result.create(collectNameIdentifiersMap(), PerlPolyNamedElement.this)
-		);
-	}
+  /**
+   * @return Map of names to name identifiers, cached
+   */
+  @NotNull
+  default Map<String, PsiElement> getNameIdentifiersMap() {
+    return CachedValuesManager.getCachedValue(this, () ->
+      CachedValueProvider.Result.create(collectNameIdentifiersMap(), PerlPolyNamedElement.this)
+    );
+  }
 
-	/**
-	 * @return Name identifier by name; null if unresovable
-	 */
-	@Nullable
-	default PsiElement getNameIdentifierByName(@NotNull String name)
-	{
-		return getNameIdentifiersMap().get(name);
-	}
+  /**
+   * @return Name identifier by name; null if unresovable
+   */
+  @Nullable
+  default PsiElement getNameIdentifierByName(@NotNull String name) {
+    return getNameIdentifiersMap().get(name);
+  }
 
-	/**
-	 * Returns name from identifier
-	 *
-	 * @param identifier identifier from getNameIdentifiersMap
-	 * @return name or null if name is unresolvable
-	 */
-	@Nullable
-	default String getNameFromIdentifier(PsiElement identifier)
-	{
-		return ElementManipulators.getValueText(identifier);
-	}
+  /**
+   * Returns name from identifier
+   *
+   * @param identifier identifier from getNameIdentifiersMap
+   * @return name or null if name is unresolvable
+   */
+  @Nullable
+  default String getNameFromIdentifier(PsiElement identifier) {
+    return ElementManipulators.getValueText(identifier);
+  }
 
-	/**
-	 * @return Names of element; override this to use stubs
-	 */
-	@NotNull
-	default List<String> getNamesList()
-	{
-		return new ArrayList<>(getNameIdentifiersMap().keySet());
-	}
+  /**
+   * @return Names of element; override this to use stubs
+   */
+  @NotNull
+  default List<String> getNamesList() {
+    return new ArrayList<>(getNameIdentifiersMap().keySet());
+  }
 
-	/**
-	 * @return Map of light elements, bound to the names identifiers, one for each name identifier
-	 */
-	@NotNull
-	default Map<String, T> getLightElementsMap()
-	{
-		return CachedValuesManager.getCachedValue(this, () ->
-				CachedValueProvider.Result.create(calcLightElementsMap(), PerlPolyNamedElement.this));
-	}
+  /**
+   * @return Map of light elements, bound to the names identifiers, one for each name identifier
+   */
+  @NotNull
+  default Map<String, T> getLightElementsMap() {
+    return CachedValuesManager.getCachedValue(this, () ->
+      CachedValueProvider.Result.create(calcLightElementsMap(), PerlPolyNamedElement.this));
+  }
 
-	/**
-	 * @return Map of light elements, bound to the names identifiers, one for each name identifier
-	 */
-	@NotNull
-	default Map<String, T> calcLightElementsMap()
-	{
-		List<String> namesList = getNamesList();
-		Map<String, T> result = new THashMap<>();
+  /**
+   * @return Map of light elements, bound to the names identifiers, one for each name identifier
+   */
+  @NotNull
+  default Map<String, T> calcLightElementsMap() {
+    List<String> namesList = getNamesList();
+    Map<String, T> result = new THashMap<>();
 
-		for (String name : namesList)
-		{
-			assert name != null;
-			result.put(name, createLightElement(name));
-		}
+    for (String name : namesList) {
+      assert name != null;
+      result.put(name, createLightElement(name));
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	/**
-	 * Creates light named element by name
-	 *
-	 * @param name light element name
-	 * @return new light element
-	 */
-	@NotNull
-	default T createLightElement(@NotNull String name)
-	{
-		//noinspection unchecked
-		return (T) new PerlDelegatingLightNamedElement<PerlPolyNamedElement>(this, name);
-	}
+  /**
+   * Creates light named element by name
+   *
+   * @param name light element name
+   * @return new light element
+   */
+  @NotNull
+  default T createLightElement(@NotNull String name) {
+    //noinspection unchecked
+    return (T)new PerlDelegatingLightNamedElement<PerlPolyNamedElement>(this, name);
+  }
 
-	/**
-	 * @return light element bound to the name identifier with name specified; null if unresolvable
-	 */
-	@Nullable
-	default T getLightElementByName(@NotNull String name)
-	{
-		return getLightElementsMap().get(name);
-	}
-
+  /**
+   * @return light element bound to the name identifier with name specified; null if unresolvable
+   */
+  @Nullable
+  default T getLightElementByName(@NotNull String name) {
+    return getLightElementsMap().get(name);
+  }
 }

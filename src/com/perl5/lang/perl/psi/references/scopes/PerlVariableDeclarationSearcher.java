@@ -79,7 +79,7 @@ public class PerlVariableDeclarationSearcher extends PerlVariableScopeProcessor 
   }
 
 /*
-	*/
+        */
   /**
    * If we've found possible result in this statement and not found a real declaration - use it
    *//*
