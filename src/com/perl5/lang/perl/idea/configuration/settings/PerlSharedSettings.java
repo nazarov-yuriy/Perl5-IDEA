@@ -20,7 +20,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.perl5.lang.mason2.idea.configuration.VariableDescription;
 import com.perl5.lang.perl.idea.PerlPathMacros;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 
 /**
  * Created by hurricup on 30.08.2015.
@@ -44,6 +47,7 @@ import java.util.Set;
 public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSettings> {
   public List<String> libRootUrls = new ArrayList<String>();
   public List<String> selfNames = new ArrayList<String>(Arrays.asList("self", "this", "class", "proto"));
+  public List<VariableDescription> wkNames = new ArrayList<>();
   public boolean SIMPLE_MAIN_RESOLUTION = true;
   public boolean AUTOMATIC_HEREDOC_INJECTIONS = true;
   public boolean ALLOW_INJECTIONS_WITH_INTERPOLATION = false;
@@ -55,6 +59,12 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
 
   @Transient
   private Set<String> SELF_NAMES_SET = null;
+
+  @Transient
+  private Map<String, String> WELL_KNOWN_EXACT_MAP = null;
+
+  @Transient
+  private Map<String, String> WELL_KNOWN_ENDS_WITH_MAP = null;
 
   @Nullable
   @Override
@@ -83,6 +93,29 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
       SELF_NAMES_SET = new THashSet<String>(selfNames);
     }
     return SELF_NAMES_SET.contains(name);
+  }
+
+  public String getWellKnownType(String name) {
+    if (WELL_KNOWN_EXACT_MAP == null || WELL_KNOWN_ENDS_WITH_MAP == null) {
+      WELL_KNOWN_EXACT_MAP = new THashMap<>();
+      WELL_KNOWN_ENDS_WITH_MAP = new THashMap<>();
+      for (VariableDescription el : wkNames) {
+        if (el.variableName.startsWith("*")) {
+          WELL_KNOWN_ENDS_WITH_MAP.put(el.variableName.substring(1), el.variableType);
+        } else {
+          WELL_KNOWN_EXACT_MAP.put(el.variableName, el.variableType);
+        }
+      }
+    }
+    if (WELL_KNOWN_EXACT_MAP.containsKey(name)) {
+      return WELL_KNOWN_EXACT_MAP.get(name);
+    }
+    for (Map.Entry<String, String> el : WELL_KNOWN_ENDS_WITH_MAP.entrySet()) {
+      if (name.endsWith(el.getKey())) {
+        return el.getValue();
+      }
+    }
+    return null;
   }
 
   public void setDeparseOptions(String optionsString) {
