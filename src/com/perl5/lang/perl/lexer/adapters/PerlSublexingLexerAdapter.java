@@ -39,7 +39,7 @@ import java.util.Map;
 
 public class PerlSublexingLexerAdapter extends LexerBase implements PerlElementTypes {
   private static final Logger LOG = Logger.getInstance(FlexAdapter.class);
-  private static final int LAZY_BLOCK_MINIMAL_SIZE = 140;
+  private static final int LAZY_BLOCK_MINIMAL_SIZE = 340;
   private static Map<IElementType, Integer> SUBLEXINGS_MAP = new THashMap<>();
 
   static {
