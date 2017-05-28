@@ -48,6 +48,7 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
   public List<String> libRootUrls = new ArrayList<String>();
   public List<String> selfNames = new ArrayList<String>(Arrays.asList("self", "this", "class", "proto"));
   public List<VariableDescription> wkNames = new ArrayList<>();
+  public List<VariableDescription> wkMethods = new ArrayList<>();
   public boolean SIMPLE_MAIN_RESOLUTION = true;
   public boolean AUTOMATIC_HEREDOC_INJECTIONS = true;
   public boolean ALLOW_INJECTIONS_WITH_INTERPOLATION = false;
@@ -65,6 +66,9 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
 
   @Transient
   private Map<String, String> WELL_KNOWN_ENDS_WITH_MAP = null;
+
+  @Transient
+  private Map<String, String> WELL_KNOWN_METHODS = null;
 
   @Nullable
   @Override
@@ -95,7 +99,7 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
     return SELF_NAMES_SET.contains(name);
   }
 
-  public String getWellKnownType(String name) {
+  public String getWellKnownVariableType(String name) {
     if (WELL_KNOWN_EXACT_MAP == null || WELL_KNOWN_ENDS_WITH_MAP == null) {
       WELL_KNOWN_EXACT_MAP = new THashMap<>();
       WELL_KNOWN_ENDS_WITH_MAP = new THashMap<>();
@@ -116,6 +120,16 @@ public class PerlSharedSettings implements PersistentStateComponent<PerlSharedSe
       }
     }
     return null;
+  }
+
+  public String getWellKnownMethodType(String pkg, String name) {
+    if (WELL_KNOWN_METHODS == null) {
+      WELL_KNOWN_METHODS = new THashMap<>();
+      for (VariableDescription el : wkMethods) {
+        WELL_KNOWN_METHODS.put(el.variableName, el.variableType);
+      }
+    }
+    return WELL_KNOWN_METHODS.get(pkg+"::"+name);
   }
 
   public void setDeparseOptions(String optionsString) {

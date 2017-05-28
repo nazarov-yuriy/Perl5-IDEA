@@ -26,6 +26,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.Processor;
 import com.perl5.lang.perl.PerlScopes;
 import com.perl5.lang.perl.extensions.packageprocessor.PerlExportDescriptor;
+import com.perl5.lang.perl.idea.configuration.settings.PerlSharedSettings;
 import com.perl5.lang.perl.idea.stubs.subsdeclarations.PerlSubDeclarationStubIndex;
 import com.perl5.lang.perl.idea.stubs.subsdefinitions.PerlSubDefinitionsStubIndex;
 import com.perl5.lang.perl.lexer.PerlElementTypes;
@@ -197,6 +198,11 @@ public class PerlSubUtil implements PerlElementTypes, PerlBuiltInSubs {
           return ((PerlSubDeclaration)targetElement).getReturns();
         }
       }
+    }
+
+    if (methodContainer instanceof PsiElement) {
+      return PerlSharedSettings.getInstance(((PsiElement)methodContainer).getProject())
+        .getWellKnownMethodType(methodElement.getPackageName(), subNameElement.getName());
     }
 
     return null;

@@ -162,14 +162,14 @@ public abstract class PerlVariableImplMixin extends PerlCompositeElementImpl imp
                     if (type != null)
                       return type;
                     else
-                      return PerlSharedSettings.getInstance(getProject()).getWellKnownType(getName());
+                      return PerlSharedSettings.getInstance(getProject()).getWellKnownVariableType(getName());
                   }
                   if (lastExpression instanceof PerlDerefExpression) {
                     String type = ((PerlDerefExpression)lastExpression).guessType();
                     if (type != null)
                       return type;
                     else
-                      return PerlSharedSettings.getInstance(getProject()).getWellKnownType(getName());
+                      return PerlSharedSettings.getInstance(getProject()).getWellKnownVariableType(getName());
                   }
                 }
               }
@@ -248,7 +248,7 @@ public abstract class PerlVariableImplMixin extends PerlCompositeElementImpl imp
           }
         }
       }
-      return PerlSharedSettings.getInstance(getProject()).getWellKnownType(getName());
+      return PerlSharedSettings.getInstance(getProject()).getWellKnownVariableType(getName());
     }
 
     return null;
