@@ -152,10 +152,18 @@ public abstract class PerlVariableMixin extends PerlCompositeElementImpl impleme
                 if (lastExpression != declaration) {
                   // source element is on the left side
                   if (lastExpression instanceof PerlMethodContainer) {
-                    return PerlSubUtil.getMethodReturnValue((PerlMethodContainer)lastExpression);
+                    String type = PerlSubUtil.getMethodReturnValue((PerlMethodContainer)lastExpression);
+                    if (type != null)
+                      return type;
+                    else
+                      return PerlSharedSettings.getInstance(getProject()).getWellKnownType(getName());
                   }
                   if (lastExpression instanceof PerlDerefExpression) {
-                    return ((PerlDerefExpression)lastExpression).guessType();
+                    String type = ((PerlDerefExpression)lastExpression).guessType();
+                    if (type != null)
+                      return type;
+                    else
+                      return PerlSharedSettings.getInstance(getProject()).getWellKnownType(getName());
                   }
                 }
               }
